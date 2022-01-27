@@ -4,7 +4,7 @@ import it.units.erallab.hmsrobots.core.controllers.IOSized;
 
 import java.util.function.Function;
 
-public interface DiscreteRL {
+public interface DiscreteRL extends IOSized {
   interface InputConverter extends Function<double[], Integer>, IOSized {
   }
 
@@ -13,8 +13,7 @@ public interface DiscreteRL {
 
   int apply(double t, int input, double r);
 
-  default ContinuousRL with(InputConverter inputConverter, OutputConverter outputConverter) {
-    DiscreteRL inner = this;
+  default ContinuousRL with(InputConverter inputConverter, DiscreteRL inner, OutputConverter outputConverter) {
     return new ContinuousRL() {
       @Override
       public double[] apply(double t, double[] input, double r) {
