@@ -13,7 +13,8 @@ public interface DiscreteRL extends IOSized {
 
   int apply(double t, int input, double r);
 
-  default ContinuousRL with(InputConverter inputConverter, DiscreteRL inner, OutputConverter outputConverter) {
+  default ContinuousRL with(InputConverter inputConverter, OutputConverter outputConverter) {
+    DiscreteRL inner = this;
     return new ContinuousRL() {
       @Override
       public double[] apply(double t, double[] input, double r) {

@@ -289,11 +289,11 @@ public class Starter {
 
   public static void main(String[] args) {
     //bipedWithBrain();
-    //bipeds();
+    bipeds();
     //rollingOne();
     //rollingBall();
     //breakingWorm();
-    plainWorm();
+    //plainWorm();
     //cShaped();
     //multiped();
     //bipedAndBall();

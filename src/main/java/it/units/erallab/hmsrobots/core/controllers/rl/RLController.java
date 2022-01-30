@@ -5,6 +5,7 @@ import it.units.erallab.hmsrobots.core.controllers.Resettable;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.util.Grid;
 
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.ToDoubleFunction;
@@ -14,15 +15,18 @@ public class RLController extends AbstractController {
   private final ToDoubleFunction<Grid<Voxel>> rewardFunction;
   private final BiFunction<Double, Grid<Voxel>, double[]> observationFunction;
   private final ContinuousRL rl;
+  private final ArrayList<ArrayList<Grid.Key>> clusters;
 
   public RLController(
       ToDoubleFunction<Grid<Voxel>> rewardFunction,
       BiFunction<Double, Grid<Voxel>, double[]> observationFunction,
-      ContinuousRL rl
+      ContinuousRL rl,
+      ArrayList<ArrayList<Grid.Key>> clusters
   ) {
     this.rewardFunction = rewardFunction;
     this.observationFunction = observationFunction;
     this.rl = rl;
+    this.clusters = clusters;
   }
 
   @Override
@@ -49,10 +53,10 @@ public class RLController extends AbstractController {
     }
     Grid<Double> output = Grid.create(voxels.getW(), voxels.getH());
     int c = 0;
-    for (Grid.Entry<Voxel> e : voxels) {
-      if (e.value() != null) {
-        output.set(e.key().x(), e.key().y(), action[c]);
-        c = c + 1;
+    for (ArrayList<Grid.Key> cluster : clusters) {
+      for (Grid.Key key : cluster) {
+        output.set(key.x(), key.y(), action[c]);
+        c++;
       }
     }
     return output;
