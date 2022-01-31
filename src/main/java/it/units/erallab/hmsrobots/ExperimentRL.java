@@ -17,10 +17,7 @@ import org.dyn4j.dynamics.Settings;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
@@ -41,18 +38,16 @@ public class ExperimentRL {
 
     // Create the robot
     Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy+t-0.01")
-        .apply(RobotUtils.buildShape("worm-8x3"));
-
-    // Compute shape mask
-    Grid<Boolean> shape = Grid.create(body.getW(), body.getH());
-    for (Grid.Entry<Voxel> e : body) {
-      if (e.value() != null) {
-        shape.set(e.key().x(), e.key().y(), true);
-      }
-    }
+        .apply(RobotUtils.buildShape("worm-5x2"));
+    // Grid<Boolean> shape = RobotUtils.buildShape("biped-4x3");
+    Grid<Boolean> shape = Grid.create(body, Objects::nonNull);
 
     // Split the robot in 4 cardinal clusters
     Set<Set<Grid.Key>> clusters = computeCardinalPoses(shape);
+
+    clusters.forEach(System.out::println);
+    System.exit(0);
+
     ArrayList<ArrayList<Grid.Key>> clustersList = new ArrayList<ArrayList<Grid.Key>>();
     int i = 0;
     for (Set<Grid.Key> cluster : clusters) {
