@@ -19,7 +19,7 @@ class StandardRewardFunction implements ToDoubleFunction<Grid<Voxel>> {
     double reward = 0;
     for (ArrayList<Grid.Key> cluster : clusters) {
       for (Grid.Key key : cluster) {
-        reward += voxels.get(key.x(), key.y()).getSensors().get(1).getReadings()[1] - 1;
+        reward += voxels.get(key.x(), key.y()).getSensors().get(1).getReadings()[0] - 1;
       }
     }
     return reward;

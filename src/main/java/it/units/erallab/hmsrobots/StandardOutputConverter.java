@@ -37,7 +37,7 @@ class StandardOutputConverter implements DiscreteRL.OutputConverter {
       controls[i] = (integer % (i+2)) == 0 ? 1.0 : -1.0;
     }
 
-    double[] output = new double[24];
+    double[] output = new double[outputDimension];
     int j = 0;
     for (int i = 0; i < numberClusters; i++) {
       for (Grid.Key key : clusters.get(i)) {

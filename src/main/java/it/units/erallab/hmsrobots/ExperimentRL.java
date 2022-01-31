@@ -30,23 +30,22 @@ public class ExperimentRL {
     // TODO Check right rates
     double learningRate = 0.9;
     double explorationRate = 0.1;
-    double learningRateDecay = 0.99;
-    double explorationRateDecay = 0.999;
-    double discountFactor = 0.99;
+    double learningRateDecay = 1.0;
+    double explorationRateDecay = 1.0;
+    double discountFactor = 0.95;
 
-    int outputDimension = 1;
+    int outputDimension = 10;
 
     // Create the robot
     Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy+t-0.01")
-        .apply(RobotUtils.buildShape("worm-5x2"));
+        .apply(RobotUtils.buildShape("biped-4x3"));
     // Grid<Boolean> shape = RobotUtils.buildShape("biped-4x3");
     Grid<Boolean> shape = Grid.create(body, Objects::nonNull);
 
     // Split the robot in 4 cardinal clusters
     Set<Set<Grid.Key>> clusters = computeCardinalPoses(shape);
-
     clusters.forEach(System.out::println);
-    System.exit(0);
+    //System.exit(0);
 
     ArrayList<ArrayList<Grid.Key>> clustersList = new ArrayList<ArrayList<Grid.Key>>();
     int i = 0;
@@ -101,7 +100,7 @@ public class ExperimentRL {
         discountFactor, random,
         qtableInitializer,
         65536,
-        24
+        outputDimension
     );
 
     // Create continuous agent from discrete one
@@ -118,7 +117,7 @@ public class ExperimentRL {
     Robot robot = new Robot(smoothedController, SerializationUtils.clone(body));
 
     // Launch task
-    for (int j = 0; j < 20; j++) {
+    for (int j = 0; j < 100; j++) {
       System.out.println("Episode " + j);
       Locomotion locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
       GridFileWriter.save(
@@ -129,7 +128,7 @@ public class ExperimentRL {
           0,
           20,
           VideoUtils.EncoderFacility.JCODEC,
-          new File("/home/eric/experiments/puf-vsr1_smoothed_8x3_" + j + ".mp4")
+          new File("/home/alessandropierro/experiments/expectedSARSA_biped_" + j + ".mp4")
       );
       rlAgentDiscrete.reset();
     }
