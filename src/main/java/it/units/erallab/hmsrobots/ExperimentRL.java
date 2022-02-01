@@ -22,6 +22,7 @@ import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
 import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
+import static org.apache.commons.math3.util.ArithmeticUtils.pow;
 
 public class ExperimentRL {
   // create main
@@ -34,11 +35,12 @@ public class ExperimentRL {
     double explorationRateDecay = 1.0;
     double discountFactor = 0.95;
 
-    int outputDimension = 10;
+    int outputDimension = Integer.parseInt(args[1]);
+    int iterations = Integer.parseInt(args[2]);
 
     // Create the robot
     Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy+t-0.01")
-        .apply(RobotUtils.buildShape("biped-4x3"));
+        .apply(RobotUtils.buildShape(args[0]));
     // Grid<Boolean> shape = RobotUtils.buildShape("biped-4x3");
     Grid<Boolean> shape = Grid.create(body, Objects::nonNull);
 
@@ -66,9 +68,11 @@ public class ExperimentRL {
     double[] binsLowerBound = new double[inputDimension];
     int[] binsNumber = new int[inputDimension];
 
+    int numberPartitions = 2;
+
     Arrays.fill(binsUpperBound, 1.0);
     Arrays.fill(binsLowerBound, -1.0);
-    Arrays.fill(binsNumber, 2);
+    Arrays.fill(binsNumber, numberPartitions);
 
     DiscreteRL.InputConverter standardInputConverter = new EquispacedInputConverter(
         inputDimension,
@@ -99,7 +103,7 @@ public class ExperimentRL {
         explorationRateDecay,
         discountFactor, random,
         qtableInitializer,
-        65536,
+        (int) Math.pow(numberPartitions, inputDimension),
         outputDimension
     );
 
@@ -117,7 +121,7 @@ public class ExperimentRL {
     Robot robot = new Robot(smoothedController, SerializationUtils.clone(body));
 
     // Launch task
-    for (int j = 0; j < 100; j++) {
+    for (int j = 0; j < iterations; j++) {
       System.out.println("Episode " + j);
       Locomotion locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
       GridFileWriter.save(
@@ -128,7 +132,7 @@ public class ExperimentRL {
           0,
           20,
           VideoUtils.EncoderFacility.JCODEC,
-          new File("/home/alessandropierro/experiments/expectedSARSA_biped_" + j + ".mp4")
+          new File("/home/alessandropierro/experiments/expectedSARSA_"+args[0]+"_" + j + ".mp4")
       );
       rlAgentDiscrete.reset();
     }

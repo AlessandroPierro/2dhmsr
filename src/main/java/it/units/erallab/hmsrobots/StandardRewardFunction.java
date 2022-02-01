@@ -8,6 +8,8 @@ import java.util.function.ToDoubleFunction;
 
 class StandardRewardFunction implements ToDoubleFunction<Grid<Voxel>> {
 
+  private double previousReward = 0;
+
   private final ArrayList<ArrayList<Grid.Key>> clusters;
 
   StandardRewardFunction(ArrayList<ArrayList<Grid.Key>> clusters) {
@@ -16,12 +18,11 @@ class StandardRewardFunction implements ToDoubleFunction<Grid<Voxel>> {
 
   @Override
   public double applyAsDouble(Grid<Voxel> voxels) {
-    double reward = 0;
     for (ArrayList<Grid.Key> cluster : clusters) {
       for (Grid.Key key : cluster) {
-        reward += voxels.get(key.x(), key.y()).getSensors().get(1).getReadings()[0] - 1;
+        previousReward -= voxels.get(key.x(), key.y()).getSensors().get(1).getReadings()[0] - 1;
       }
     }
-    return reward;
+    return previousReward;
   }
 }
