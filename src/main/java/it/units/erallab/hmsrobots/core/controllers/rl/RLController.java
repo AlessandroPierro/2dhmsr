@@ -40,7 +40,7 @@ public class RLController extends AbstractController {
       output = Grid.create(voxels.getW(), voxels.getH());
       initialized = true;
     }
-    if ((step % 10) == 0) {
+    if ((step % 30) == 0) {
       double[] observation = observationFunction.apply(t, voxels);
       if (observation.length != rl.getInputDimension()) {
         throw new IllegalArgumentException(String.format(
@@ -67,7 +67,7 @@ public class RLController extends AbstractController {
         }
       }
     }
-    step = (step % 10) + 1;
+    step = (step % 30) + 1;
     return output;
   }
 

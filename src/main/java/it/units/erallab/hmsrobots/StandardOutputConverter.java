@@ -34,7 +34,7 @@ class StandardOutputConverter implements DiscreteRL.OutputConverter {
   public double[] apply(Integer integer) {
     double[] controls = new double[numberClusters];
     for (int i = 0; i < numberClusters; i++) {
-      controls[i] = (integer % (i+2)) == 0 ? 1.0 : -1.0;
+      controls[i] = (integer % (i+2)) == 0 ? 0.65 : -0.65;
     }
 
     double[] output = new double[outputDimension];

@@ -12,7 +12,10 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 import it.units.erallab.hmsrobots.viewers.GridFileWriter;
+import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
+import it.units.erallab.hmsrobots.viewers.NamedValue;
 import it.units.erallab.hmsrobots.viewers.VideoUtils;
+import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
 import org.dyn4j.dynamics.Settings;
 
 import java.io.File;
@@ -22,7 +25,6 @@ import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
 import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
-import static org.apache.commons.math3.util.ArithmeticUtils.pow;
 
 public class ExperimentRL {
   // create main
@@ -118,12 +120,17 @@ public class ExperimentRL {
     RLController rlController;
     rlController = new RLController(rewardFunction, observationFunction, rlAgent, clustersList);
     SmoothedController smoothedController = new SmoothedController(rlController, 10);
-    Robot robot = new Robot(smoothedController, SerializationUtils.clone(body));
+    Robot robot = new Robot(rlController, SerializationUtils.clone(body));
 
     // Launch task
     for (int j = 0; j < iterations; j++) {
       System.out.println("Episode " + j);
       Locomotion locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
+      GridOnlineViewer.run(
+          locomotion,
+          Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
+          Drawers::basicWithMiniWorldAndSpectra
+      );
       GridFileWriter.save(
           locomotion,
           robot,
@@ -132,7 +139,7 @@ public class ExperimentRL {
           0,
           20,
           VideoUtils.EncoderFacility.JCODEC,
-          new File("/home/alessandropierro/experiments/expectedSARSA_"+args[0]+"_" + j + ".mp4")
+          new File(args[3] + "expectedSARSA_" + args[0] + "_" + j + ".mp4")
       );
       rlAgentDiscrete.reset();
     }
