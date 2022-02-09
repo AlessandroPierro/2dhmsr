@@ -112,7 +112,7 @@ public class ExperimentRL {
 
     // Create the RL controller and apply it to the body
     RLController rlController;
-    rlController = new RLController(rewardFunction, observationFunction, rlAgent, 30, clustersList);
+    rlController = new RLController(rewardFunction, observationFunction, rlAgent, 15, clustersList);
     Robot robot = new Robot(rlController, SerializationUtils.clone(body));
 
     Locomotion locomotion;
