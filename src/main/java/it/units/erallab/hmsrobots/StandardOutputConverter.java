@@ -7,12 +7,14 @@ import it.units.erallab.hmsrobots.util.Grid;
 import java.util.ArrayList;
 import java.util.function.Function;
 
-import static java.lang.Math.random;
+import static java.lang.Math.abs;
 
 class StandardOutputConverter implements DiscreteRL.OutputConverter {
   private final int inputDimension = 1;
   private final int outputDimension;
   private final int numberClusters;
+
+  private final double force;
 
   private final Grid<Voxel> body;
   private final ArrayList<ArrayList<Grid.Key>> clusters;
@@ -21,20 +23,30 @@ class StandardOutputConverter implements DiscreteRL.OutputConverter {
   StandardOutputConverter(
       int outputDimension,
       Grid<Voxel> body,
-      ArrayList<ArrayList<Grid.Key>> clusters
-  ) {
+      ArrayList<ArrayList<Grid.Key>> clusters,
+      double force
+      ) {
     this.outputDimension = outputDimension;
     this.body = body;
     this.clusters = clusters;
 
     this.numberClusters = clusters.size();
+    this.force = abs(force);
+  }
+
+  StandardOutputConverter(
+      int outputDimension,
+      Grid<Voxel> body,
+      ArrayList<ArrayList<Grid.Key>> clusters
+  ) {
+    this (outputDimension, body, clusters, 1.0);
   }
 
   @Override
   public double[] apply(Integer integer) {
     double[] controls = new double[numberClusters];
     for (int i = 0; i < numberClusters; i++) {
-      controls[i] = (integer % (i+2)) == 0 ? 0.65 : -0.65;
+      controls[i] = (integer % (i + 2)) == 0 ? force : -force;
     }
 
     double[] output = new double[outputDimension];

@@ -1,6 +1,5 @@
 package it.units.erallab.hmsrobots;
 
-import it.units.erallab.hmsrobots.core.controllers.SmoothedController;
 import it.units.erallab.hmsrobots.core.controllers.rl.ContinuousRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.RLController;
@@ -12,7 +11,6 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 import it.units.erallab.hmsrobots.viewers.GridFileWriter;
-import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
 import it.units.erallab.hmsrobots.viewers.NamedValue;
 import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
@@ -27,28 +25,25 @@ import java.util.function.ToDoubleFunction;
 import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
 
 public class ExperimentRL {
-  // create main
   public static void main(String[] args) throws IOException {
     // Settings
-    // TODO Check right rates
-    double learningRate = 0.9;
-    double explorationRate = 0.1;
+    double learningRate = 0.01;
+    double explorationRate = 0.9;
     double learningRateDecay = 1.0;
-    double explorationRateDecay = 1.0;
-    double discountFactor = 0.95;
+    double explorationRateDecay = 0.95;
+    double discountFactor = 0.99;
 
     int outputDimension = Integer.parseInt(args[1]);
-    int iterations = Integer.parseInt(args[2]);
+    int episodes = Integer.parseInt(args[2]);
 
     // Create the robot
-    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy+t-0.01")
+    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy-0.01")
         .apply(RobotUtils.buildShape(args[0]));
-    // Grid<Boolean> shape = RobotUtils.buildShape("biped-4x3");
     Grid<Boolean> shape = Grid.create(body, Objects::nonNull);
 
     // Split the robot in 4 cardinal clusters
     Set<Set<Grid.Key>> clusters = computeCardinalPoses(shape);
-    clusters.forEach(System.out::println);
+    //clusters.forEach(System.out::println);
     //System.exit(0);
 
     ArrayList<ArrayList<Grid.Key>> clustersList = new ArrayList<ArrayList<Grid.Key>>();
@@ -70,10 +65,10 @@ public class ExperimentRL {
     double[] binsLowerBound = new double[inputDimension];
     int[] binsNumber = new int[inputDimension];
 
-    int numberPartitions = 2;
+    int numberPartitions = 4;
 
     Arrays.fill(binsUpperBound, 1.0);
-    Arrays.fill(binsLowerBound, -1.0);
+    Arrays.fill(binsLowerBound, 0.0);
     Arrays.fill(binsNumber, numberPartitions);
 
     DiscreteRL.InputConverter standardInputConverter = new EquispacedInputConverter(
@@ -85,14 +80,14 @@ public class ExperimentRL {
 
     // Create output converter
     DiscreteRL.OutputConverter outputConverter;
-    outputConverter = new StandardOutputConverter(outputDimension, body, clustersList);
+    outputConverter = new StandardOutputConverter(outputDimension, body, clustersList, 0.65);
 
     // Create Random
     Random random = new Random(42);
 
     // Create QTable initializer
-    double averageQ = 1;
-    double stdQ = 0.1;
+    double averageQ = 0;
+    double stdQ = 0;
     Supplier<Double> qtableInitializer = () -> {
       return averageQ + stdQ * random.nextGaussian();
     };
@@ -106,7 +101,8 @@ public class ExperimentRL {
         discountFactor, random,
         qtableInitializer,
         (int) Math.pow(numberPartitions, inputDimension),
-        outputDimension
+        outputDimension,
+        true
     );
 
     // Create continuous agent from discrete one
@@ -118,30 +114,28 @@ public class ExperimentRL {
 
     // Create the RL controller and apply it to the body
     RLController rlController;
-    rlController = new RLController(rewardFunction, observationFunction, rlAgent, clustersList);
-    SmoothedController smoothedController = new SmoothedController(rlController, 10);
+    rlController = new RLController(rewardFunction, observationFunction, rlAgent, 30, clustersList);
+    // SmoothedController smoothedController = new SmoothedController(rlController, 10);
     Robot robot = new Robot(rlController, SerializationUtils.clone(body));
 
+    Locomotion locomotion;
+
     // Launch task
-    for (int j = 0; j < iterations; j++) {
-      System.out.println("Episode " + j);
-      Locomotion locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
-      GridOnlineViewer.run(
-          locomotion,
-          Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
-          Drawers::basicWithMiniWorldAndSpectra
-      );
+    for (int j = 0; j < episodes; j++) {
+      System.out.println("Episod " + j);
+      locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
+
       GridFileWriter.save(
           locomotion,
-          robot,
+          Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
           600,
           400,
           0,
           20,
           VideoUtils.EncoderFacility.JCODEC,
-          new File(args[3] + "expectedSARSA_" + args[0] + "_" + j + ".mp4")
+          new File(args[3] + "expectedSARSA_" + args[0] + "_" + j + ".mp4"),
+          Drawers::basicWithMiniWorldAndSpectra
       );
-      rlAgentDiscrete.reset();
     }
   }
 

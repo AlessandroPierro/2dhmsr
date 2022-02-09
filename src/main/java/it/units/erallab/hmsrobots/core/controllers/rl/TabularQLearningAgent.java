@@ -78,13 +78,12 @@ public class TabularQLearningAgent implements DiscreteRL, Resettable {
   @Override
   public void reset() {
     initialized = false;
-    // TODO reset() should re-initialize the QTable as well?
   }
 
-  private void updateQTable(int previous_state, int action, int new_state, double r) {
-    double q = qTable[previous_state][action];
-    double maxQ = getMaxQ(new_state);
-    qTable[previous_state][action] = q + learningRate * (r + discountFactor * maxQ - q);
+  private void updateQTable(int previousState, int action, int newState, double r) {
+    double q = qTable[previousState][action];
+    double maxQ = getMaxQ(newState);
+    qTable[previousState][action] = q + learningRate * (r + discountFactor * maxQ - q);
   }
 
   private double getMaxQ(int state) {

@@ -6,18 +6,17 @@ import java.util.function.Supplier;
 import java.util.random.RandomGenerator;
 
 public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
-  private double learningRate;
-  private double explorationRate;
   private final double learningRateDecay;
   private final double explorationRateDecay;
   private final double discountFactor;
   private final RandomGenerator rg;
-
   private final int inputDimension;
   private final int outputDimension;
-
   private final double[][] qTable;
-  private boolean initialized;
+  private final boolean episodic;
+  private double learningRate;
+  private double explorationRate;
+  private boolean initialized = false;
   private int previousState;
   private int action;
 
@@ -29,7 +28,8 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
       double discountFactor, RandomGenerator rg,
       Supplier<Double> initializer,
       int inputDimension,
-      int outputDimension
+      int outputDimension,
+      boolean episodic
   ) {
     this.learningRate = learningRate;
     this.explorationRate = explorationRate;
@@ -46,6 +46,8 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
         qTable[i][j] = initializer.get();
       }
     }
+
+    this.episodic = episodic;
   }
 
   @Override
@@ -55,15 +57,15 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
     } else {
       initialized = true;
     }
-    double random = rg.nextDouble();
-    if (random < explorationRate) {
-      action = rg.nextInt(outputDimension);
-    } else {
-      action = getMaxAction(input);
-    }
+
+    action = rg.nextDouble() < explorationRate ? rg.nextInt(outputDimension) : getMaxAction(input);
     previousState = input;
-    learningRate = learningRate * learningRateDecay;
-    explorationRate = explorationRate * explorationRateDecay;
+
+    if (!episodic) {
+      learningRate = learningRate * learningRateDecay;
+      explorationRate = explorationRate * explorationRateDecay;
+    }
+
     return action;
   }
 
@@ -73,30 +75,6 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
 
   public int getOutputDimension() {
     return outputDimension;
-  }
-
-  @Override
-  public void reset() {
-    initialized = false;
-    // TODO reset() should re-initialize the QTable as well?
-  }
-
-  private void updateQTable(int previous_state, int action, int new_state, double r) {
-    double q = qTable[previous_state][action];
-    int maxQAction = getMaxAction(new_state);
-    double expectedSARSA = 0.0;
-    for (int action_prime = 0; action_prime < outputDimension; action_prime++) {
-      expectedSARSA += qTable[new_state][action_prime] * (action_prime == maxQAction ? 0.9 : (0.1 / (outputDimension - 1)));
-    }
-    qTable[previous_state][action] = q + learningRate * (r + discountFactor * expectedSARSA - q);
-  }
-
-  private double getMaxQ(int state) {
-    double maxQ = Double.NEGATIVE_INFINITY;
-    for (int action = 0; action < outputDimension; action++) {
-      maxQ = Math.max(maxQ, qTable[state][action]);
-    }
-    return maxQ;
   }
 
   private int getMaxAction(int state) {
@@ -109,5 +87,30 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
       }
     }
     return maxAction;
+  }
+
+  private double getMaxQ(int state) {
+    double maxQ = Double.NEGATIVE_INFINITY;
+    for (int action = 0; action < outputDimension; action++) {
+      maxQ = Math.max(maxQ, qTable[state][action]);
+    }
+    return maxQ;
+  }
+
+  @Override
+  public void reset() {
+    initialized = false;
+    learningRate = learningRate * learningRateDecay;
+    explorationRate = explorationRate * explorationRateDecay;
+  }
+
+  private void updateQTable(int previous_state, int action, int new_state, double r) {
+    double q = qTable[previous_state][action];
+    int maxQAction = getMaxAction(new_state);
+    double expectedSARSA = 0.0;
+    for (int action_prime = 0; action_prime < outputDimension; action_prime++) {
+      expectedSARSA += qTable[new_state][action_prime] * (action_prime == maxQAction ? 0.9 : (0.1 / (outputDimension - 1)));
+    }
+    qTable[previous_state][action] = q + learningRate * (r + discountFactor * expectedSARSA - q);
   }
 }

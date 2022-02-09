@@ -42,12 +42,13 @@ public class EquispacedInputConverter implements DiscreteRL.InputConverter {
     int result = 0;
     for (int i = 0; i < inputDimension; i++) {
       // TODO Do we want this behavior?
-      if (doubles[i] < lowerBound[i] || doubles[i] > upperBound[i]) {
-        throw new IllegalArgumentException("input value out of bounds");
-      } else {
-        int index = (int) Math.floor((doubles[i] - lowerBound[i]) / (upperBound[i] - lowerBound[i]) * sizes[i]);
-        result = result + (index * transformationIndexes[i]);
-      }
+      //if (doubles[i] < lowerBound[i] || doubles[i] > upperBound[i]) {
+      //  // throw exception and print value
+      //  throw new IllegalArgumentException("Input value out of bounds. Value: " + doubles[i]);
+      //} else {
+      int index = (int) Math.floor((doubles[i] - lowerBound[i]) / (upperBound[i] - lowerBound[i]) * sizes[i]);
+      result += (index * transformationIndexes[i]);
+      //}
     }
 
     return result;
@@ -80,7 +81,7 @@ public class EquispacedInputConverter implements DiscreteRL.InputConverter {
     int[] result = new int[a.length];
     result[result.length - 1] = 1;
     for (int i = result.length - 2; i >= 0; i--) {
-      result[i] = result[i+1] * a[i+1];
+      result[i] = result[i + 1] * a[i + 1];
     }
 
     return result;

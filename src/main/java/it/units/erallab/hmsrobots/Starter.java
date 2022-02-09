@@ -290,8 +290,8 @@ public class Starter {
   }
 
   public static void main(String[] args) {
-    //bipedWithBrain();
-    bipeds();
+    bipedWithBrain();
+    //bipeds();
     //rollingOne();
     //rollingBall();
     //breakingWorm();

@@ -10,11 +10,12 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.ToDoubleFunction;
 
-public class RLController extends AbstractController {
+public class RLController<frequency> extends AbstractController {
 
   private final ToDoubleFunction<Grid<Voxel>> rewardFunction;
   private final BiFunction<Double, Grid<Voxel>, double[]> observationFunction;
   private final ContinuousRL rl;
+  private final int frequency;
   private final ArrayList<ArrayList<Grid.Key>> clusters;
   private int step = 0;
   private Grid<Double> output;
@@ -24,11 +25,13 @@ public class RLController extends AbstractController {
       ToDoubleFunction<Grid<Voxel>> rewardFunction,
       BiFunction<Double, Grid<Voxel>, double[]> observationFunction,
       ContinuousRL rl,
+      int frequency,
       ArrayList<ArrayList<Grid.Key>> clusters
   ) {
     this.rewardFunction = rewardFunction;
     this.observationFunction = observationFunction;
     this.rl = rl;
+    this.frequency = frequency;
     this.clusters = clusters;
   }
 
@@ -40,7 +43,7 @@ public class RLController extends AbstractController {
       output = Grid.create(voxels.getW(), voxels.getH());
       initialized = true;
     }
-    if ((step % 30) == 0) {
+    if ((step % frequency) == 0) {
       double[] observation = observationFunction.apply(t, voxels);
       if (observation.length != rl.getInputDimension()) {
         throw new IllegalArgumentException(String.format(
@@ -67,7 +70,7 @@ public class RLController extends AbstractController {
         }
       }
     }
-    step = (step % 30) + 1;
+    step = (step % frequency) + 1;
     return output;
   }
 
