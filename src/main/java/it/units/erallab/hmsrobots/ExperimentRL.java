@@ -46,10 +46,10 @@ public class ExperimentRL {
     //clusters.forEach(System.out::println);
     //System.exit(0);
 
-    ArrayList<ArrayList<Grid.Key>> clustersList = new ArrayList<ArrayList<Grid.Key>>();
+    ArrayList<ArrayList<Grid.Key>> clustersList = new ArrayList<>();
     int i = 0;
     for (Set<Grid.Key> cluster : clusters) {
-      clustersList.add(new ArrayList<Grid.Key>());
+      clustersList.add(new ArrayList<>());
       clustersList.get(i).addAll(cluster);
       i++;
     }
@@ -80,7 +80,7 @@ public class ExperimentRL {
 
     // Create output converter
     DiscreteRL.OutputConverter outputConverter;
-    outputConverter = new StandardOutputConverter(outputDimension, body, clustersList, 0.65);
+    outputConverter = new StandardOutputConverter(outputDimension, clustersList, 0.65);
 
     // Create Random
     Random random = new Random(42);
@@ -88,9 +88,7 @@ public class ExperimentRL {
     // Create QTable initializer
     double averageQ = 0;
     double stdQ = 0;
-    Supplier<Double> qtableInitializer = () -> {
-      return averageQ + stdQ * random.nextGaussian();
-    };
+    Supplier<Double> qtableInitializer = () -> averageQ + stdQ * random.nextGaussian();
 
     // Instantiate Tabular Q-Learning agent
     TabularExpectedSARSAAgent rlAgentDiscrete = new TabularExpectedSARSAAgent(
@@ -115,14 +113,13 @@ public class ExperimentRL {
     // Create the RL controller and apply it to the body
     RLController rlController;
     rlController = new RLController(rewardFunction, observationFunction, rlAgent, 30, clustersList);
-    // SmoothedController smoothedController = new SmoothedController(rlController, 10);
     Robot robot = new Robot(rlController, SerializationUtils.clone(body));
 
     Locomotion locomotion;
 
     // Launch task
     for (int j = 0; j < episodes; j++) {
-      System.out.println("Episod " + j);
+      System.out.println("Episode " + j);
       locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
 
       GridFileWriter.save(

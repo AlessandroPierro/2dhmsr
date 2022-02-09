@@ -7,7 +7,6 @@ import java.util.function.Function;
 public class EquispacedInputConverter implements DiscreteRL.InputConverter {
 
   private final int inputDimension;
-  private final int outputDimension = 1;
   private final double[] upperBound;
   private final double[] lowerBound;
   private final int[] sizes;
@@ -71,7 +70,7 @@ public class EquispacedInputConverter implements DiscreteRL.InputConverter {
 
   @Override
   public int getOutputDimension() {
-    return outputDimension;
+    return 1;
   }
 
   private int[] inverseCumulativeProduct(int[] a) {

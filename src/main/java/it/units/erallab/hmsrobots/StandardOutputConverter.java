@@ -1,7 +1,6 @@
 package it.units.erallab.hmsrobots;
 
 import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
-import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.util.Grid;
 
 import java.util.ArrayList;
@@ -10,24 +9,20 @@ import java.util.function.Function;
 import static java.lang.Math.abs;
 
 class StandardOutputConverter implements DiscreteRL.OutputConverter {
-  private final int inputDimension = 1;
   private final int outputDimension;
   private final int numberClusters;
 
   private final double force;
 
-  private final Grid<Voxel> body;
   private final ArrayList<ArrayList<Grid.Key>> clusters;
 
 
   StandardOutputConverter(
       int outputDimension,
-      Grid<Voxel> body,
       ArrayList<ArrayList<Grid.Key>> clusters,
       double force
-      ) {
+  ) {
     this.outputDimension = outputDimension;
-    this.body = body;
     this.clusters = clusters;
 
     this.numberClusters = clusters.size();
@@ -36,10 +31,9 @@ class StandardOutputConverter implements DiscreteRL.OutputConverter {
 
   StandardOutputConverter(
       int outputDimension,
-      Grid<Voxel> body,
       ArrayList<ArrayList<Grid.Key>> clusters
   ) {
-    this (outputDimension, body, clusters, 1.0);
+    this(outputDimension, clusters, 1.0);
   }
 
   @Override
@@ -52,7 +46,7 @@ class StandardOutputConverter implements DiscreteRL.OutputConverter {
     double[] output = new double[outputDimension];
     int j = 0;
     for (int i = 0; i < numberClusters; i++) {
-      for (Grid.Key key : clusters.get(i)) {
+      for (Grid.Key ignored : clusters.get(i)) {
         output[j] = controls[i];
         j++;
       }
@@ -72,7 +66,7 @@ class StandardOutputConverter implements DiscreteRL.OutputConverter {
 
   @Override
   public int getInputDimension() {
-    return inputDimension;
+    return 1;
   }
 
   @Override

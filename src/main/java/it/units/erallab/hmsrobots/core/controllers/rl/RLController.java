@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.ToDoubleFunction;
 
-public class RLController<frequency> extends AbstractController {
+public class RLController extends AbstractController {
 
   private final ToDoubleFunction<Grid<Voxel>> rewardFunction;
   private final BiFunction<Double, Grid<Voxel>, double[]> observationFunction;

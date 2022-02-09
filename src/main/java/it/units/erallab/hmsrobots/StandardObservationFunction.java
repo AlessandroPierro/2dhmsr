@@ -12,7 +12,6 @@ import java.util.function.BiFunction;
 
 class StandardObservationFunction implements BiFunction<Double, Grid<Voxel>, double[]> {
 
-  private final Grid<Voxel> body;
   private final ArrayList<ArrayList<Grid.Key>> clusters;
   private final int numberClusters;
   private final int[] clustersDimensions;
@@ -23,7 +22,6 @@ class StandardObservationFunction implements BiFunction<Double, Grid<Voxel>, dou
       Grid<Voxel> body,
       ArrayList<ArrayList<Grid.Key>> clusters
   ) {
-    this.body = body;
     this.clusters = clusters;
 
     // Compute the outputDimension
