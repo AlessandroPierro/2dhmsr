@@ -9,7 +9,7 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
   private final double learningRateDecay;
   private final double explorationRateDecay;
   private final double discountFactor;
-  private final RandomGenerator rg;
+  private final RandomGenerator random;
   private final int inputDimension;
   private final int outputDimension;
   private final double[][] qTable;
@@ -25,7 +25,7 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
       double explorationRate,
       double learningRateDecay,
       double explorationRateDecay,
-      double discountFactor, RandomGenerator rg,
+      double discountFactor, RandomGenerator random,
       Supplier<Double> initializer,
       int inputDimension,
       int outputDimension,
@@ -36,7 +36,7 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
     this.learningRateDecay = learningRateDecay;
     this.explorationRateDecay = explorationRateDecay;
     this.discountFactor = discountFactor;
-    this.rg = rg;
+    this.random = random;
     this.inputDimension = inputDimension;
     this.outputDimension = outputDimension;
     this.qTable = new double[inputDimension][outputDimension];
@@ -58,7 +58,7 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
       initialized = true;
     }
 
-    action = rg.nextDouble() < explorationRate ? rg.nextInt(outputDimension) : getMaxAction(input);
+    action = random.nextDouble() < explorationRate ? random.nextInt(outputDimension) : getMaxAction(input);
     previousState = input;
 
     if (!episodic) {

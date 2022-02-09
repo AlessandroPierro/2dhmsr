@@ -11,6 +11,7 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 import it.units.erallab.hmsrobots.viewers.GridFileWriter;
+import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
 import it.units.erallab.hmsrobots.viewers.NamedValue;
 import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
@@ -80,7 +81,7 @@ public class ExperimentRL {
 
     // Create output converter
     DiscreteRL.OutputConverter outputConverter;
-    outputConverter = new StandardOutputConverter(outputDimension, clustersList, 0.65);
+    outputConverter = new StandardOutputConverter(outputDimension, clustersList, 0.4);
 
     // Create Random
     Random random = new Random(42);
@@ -119,9 +120,16 @@ public class ExperimentRL {
 
     // Launch task
     for (int j = 0; j < episodes; j++) {
-      System.out.println("Episode " + j);
-      locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
 
+      System.out.println("Episode " + j);
+      locomotion = new Locomotion(1000, Locomotion.createTerrain("flat"), new Settings());
+      GridOnlineViewer.run(
+          locomotion,
+          Grid.create(1, 1, new NamedValue<>("rlRobot", robot)),
+          Drawers::basicWithMiniWorld
+      );
+
+      locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
       GridFileWriter.save(
           locomotion,
           Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
