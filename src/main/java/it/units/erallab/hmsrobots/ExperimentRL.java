@@ -1,5 +1,6 @@
 package it.units.erallab.hmsrobots;
 
+import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.rl.ContinuousRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.RLController;
@@ -113,8 +114,9 @@ public class ExperimentRL {
 
     // Create the RL controller and apply it to the body
     RLController rlController;
-    rlController = new RLController(rewardFunction, observationFunction, rlAgent, 15, clustersList);
-    Robot robot = new Robot(rlController, SerializationUtils.clone(body));
+    rlController = new RLController(rewardFunction, observationFunction, rlAgent, clustersList);
+    StepController stepController = new StepController(rlController, 1.0);
+    Robot robot = new Robot(stepController, SerializationUtils.clone(body));
 
     Locomotion locomotion;
 
