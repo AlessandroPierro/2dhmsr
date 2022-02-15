@@ -66,7 +66,7 @@ public class ExperimentRL {
     double[] binsLowerBound = new double[inputDimension];
     int[] binsNumber = new int[inputDimension];
 
-    int numberPartitions = 4;
+    int numberPartitions = 2;
 
     Arrays.fill(binsUpperBound, 1.0);
     Arrays.fill(binsLowerBound, 0.0);
@@ -109,12 +109,12 @@ public class ExperimentRL {
 
     // Create the reward function
     ToDoubleFunction<Grid<Voxel>> rewardFunction;
-    rewardFunction = new StandardRewardFunction(clustersList);
+    rewardFunction = new AveragedRewardFunction(clustersList, 4);
 
     // Create the RL controller and apply it to the body
     RLController rlController;
     rlController = new RLController(rewardFunction, observationFunction, rlAgent, clustersList);
-    StepController stepController = new StepController(rlController, 1.0);
+    StepController stepController = new StepController(rlController, 0.5);
     Robot robot = new Robot(stepController, SerializationUtils.clone(body));
 
     Locomotion locomotion;
@@ -136,6 +136,11 @@ public class ExperimentRL {
       );
     }
 
+    rlAgentDiscrete.setExplorationRate(0);
+    rlController = new RLController(rewardFunction, observationFunction, rlAgent, clustersList);
+    stepController = new StepController(rlController, 0.5);
+    robot = new Robot(stepController, SerializationUtils.clone(body));
+
     // Test episodes
     for (int j = 0; j < 5; j++) {
       System.out.println("Testing episode " + (j+1) + "/5");
@@ -149,7 +154,7 @@ public class ExperimentRL {
           20,
           VideoUtils.EncoderFacility.JCODEC,
           new File(args[3] + "test_expectedSARSA_" + args[0] + "_" + j + ".mp4"),
-          Drawers::basicWithMiniWorld
+          Drawers::basicWithMiniWorldAndSpectra
       );
     }
   }

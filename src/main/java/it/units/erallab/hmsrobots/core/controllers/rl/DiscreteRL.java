@@ -17,8 +17,8 @@ public interface DiscreteRL extends IOSized {
     DiscreteRL inner = this;
     return new ContinuousRL() {
       @Override
-      public double[] apply(double t, double[] input, double r) {
-        return outputConverter.apply(inner.apply(t, inputConverter.apply(input), r));
+      public double[] apply(double t, double[] state, double reward) {
+        return outputConverter.apply(inner.apply(t, inputConverter.apply(state), reward));
       }
 
       @Override
