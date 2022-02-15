@@ -29,15 +29,17 @@ class StandardRewardFunction implements ToDoubleFunction<Grid<Voxel>> {
 
   @Override
   public double applyAsDouble(Grid<Voxel> voxels) {
-    previousReward = 0;
     int counter = 0;
+    double reward = 0.0;
     for (ArrayList<Grid.Key> cluster : clusters) {
       for (Grid.Key key : cluster) {
-        previousReward += voxels.get(key.x(), key.y()).getSensors().get(1).getReadings()[0];
+        reward += voxels.get(key.x(), key.y()).getSensors().get(1).getReadings()[0];
         ++counter;
       }
     }
-    previousReward = previousReward / counter - baseline;
-    return previousReward;
+    reward = reward / counter;
+    double deltaReward = reward - previousReward;
+    previousReward = reward;
+    return deltaReward;
   }
 }

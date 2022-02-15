@@ -12,7 +12,6 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 import it.units.erallab.hmsrobots.viewers.GridFileWriter;
-import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
 import it.units.erallab.hmsrobots.viewers.NamedValue;
 import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
@@ -29,11 +28,11 @@ import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses
 public class ExperimentRL {
   public static void main(String[] args) throws IOException {
     // Settings
-    double learningRate = 0.01;
-    double explorationRate = 0.9;
+    double learningRate = 0.1;
+    double explorationRate = 0.15;
     double learningRateDecay = 1.0;
-    double explorationRateDecay = 0.95;
-    double discountFactor = 0.99;
+    double explorationRateDecay = 0.995;
+    double discountFactor = 0.7;
 
     int outputDimension = Integer.parseInt(args[1]);
     int episodes = Integer.parseInt(args[2]);
@@ -82,10 +81,10 @@ public class ExperimentRL {
 
     // Create output converter
     DiscreteRL.OutputConverter outputConverter;
-    outputConverter = new StandardOutputConverter(outputDimension, clustersList, 0.4);
+    outputConverter = new StandardOutputConverter(outputDimension, clustersList, 0.45);
 
     // Create Random
-    Random random = new Random(42);
+    Random random = new Random(44);
 
     // Create QTable initializer
     double averageQ = 0;
@@ -120,9 +119,9 @@ public class ExperimentRL {
 
     Locomotion locomotion;
 
-    // Launch task
+    // Training episodes
     for (int j = 0; j < episodes; j++) {
-
+      System.out.println("Training episode " + (j+1) + "/" + episodes);
       locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
       GridFileWriter.save(
           locomotion,
@@ -133,7 +132,24 @@ public class ExperimentRL {
           20,
           VideoUtils.EncoderFacility.JCODEC,
           new File(args[3] + "expectedSARSA_" + args[0] + "_" + j + ".mp4"),
-          Drawers::basicWithMiniWorldAndSpectra
+          Drawers::basicWithMiniWorld
+      );
+    }
+
+    // Test episodes
+    for (int j = 0; j < 5; j++) {
+      System.out.println("Testing episode " + (j+1) + "/5");
+      locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
+      GridFileWriter.save(
+          locomotion,
+          Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
+          600,
+          400,
+          0,
+          20,
+          VideoUtils.EncoderFacility.JCODEC,
+          new File(args[3] + "test_expectedSARSA_" + args[0] + "_" + j + ".mp4"),
+          Drawers::basicWithMiniWorld
       );
     }
   }

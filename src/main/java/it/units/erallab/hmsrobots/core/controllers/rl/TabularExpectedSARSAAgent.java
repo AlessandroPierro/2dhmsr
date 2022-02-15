@@ -104,13 +104,17 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
     explorationRate = explorationRate * explorationRateDecay;
   }
 
-  private void updateQTable(int previous_state, int action, int new_state, double r) {
-    double q = qTable[previous_state][action];
-    int maxQAction = getMaxAction(new_state);
+  private void updateQTable(int previousState, int action, int newState, double r) {
+    double q = qTable[previousState][action];
+    int maxQAction = getMaxAction(newState);
     double expectedSARSA = 0.0;
-    for (int action_prime = 0; action_prime < outputDimension; action_prime++) {
-      expectedSARSA += qTable[new_state][action_prime] * (action_prime == maxQAction ? 0.9 : (0.1 / (outputDimension - 1)));
+    for (int possibleAction = 0; possibleAction < outputDimension; possibleAction++) {
+      expectedSARSA += qTable[newState][possibleAction] * (possibleAction == maxQAction ? 0.9 : (0.1 / (outputDimension - 1)));
     }
-    qTable[previous_state][action] = q + learningRate * (r + discountFactor * expectedSARSA - q);
+    qTable[previousState][action] = q + learningRate * (r + discountFactor * expectedSARSA - q);
+  }
+
+  public void setExplorationRate(double explorationRate) {
+    this.explorationRate = explorationRate;
   }
 }
