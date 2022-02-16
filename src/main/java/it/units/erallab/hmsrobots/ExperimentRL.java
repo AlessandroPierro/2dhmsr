@@ -28,10 +28,10 @@ import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses
 public class ExperimentRL {
   public static void main(String[] args) {
     // Settings
-    double learningRate = 0.1;
-    double explorationRate = 0.15;
+    double learningRate = 0.25;
+    double explorationRate = 0.9;
     double learningRateDecay = 1.0;
-    double explorationRateDecay = 0.995;
+    double explorationRateDecay = 1.0;
     double discountFactor = 0.7;
 
     int outputDimension = Integer.parseInt(args[1]);
@@ -82,7 +82,7 @@ public class ExperimentRL {
     outputConverter = new StandardOutputConverter(outputDimension, clustersList, 0.45);
 
     // Create Random
-    Random random = new Random(44);
+    Random random = new Random(50);
 
     // Create QTable initializer
     double averageQ = 0;
@@ -95,7 +95,7 @@ public class ExperimentRL {
         explorationRate,
         learningRateDecay,
         explorationRateDecay,
-        discountFactor, 42,
+        discountFactor, 50,
         qtableInitializer,
         (int) Math.pow(numberPartitions, inputDimension),
         outputDimension,
@@ -111,50 +111,54 @@ public class ExperimentRL {
 
     // Create the reward function
     ToDoubleFunction<Grid<Voxel>> rewardFunction;
-    rewardFunction = new AveragedRewardFunction(clustersList, 4);
+    rewardFunction = new AveragedRewardFunction(clustersList, 10);
 
     // Create the RL controller and apply it to the body
     RLController rlController;
     rlController = new RLController(rewardFunction, observationFunction, rlAgent, clustersList);
-    StepController stepController = new StepController(rlController, 0.5);
+    StepController stepController = new StepController(rlController, 0.25);
     Robot robot = new Robot(stepController, SerializationUtils.clone(body));
 
     Locomotion locomotion;
 
     // Training episodes
-    for (int j = 0; j < episodes; j++) {
-      System.out.println("Training episode " + (j + 1) + "/" + episodes);
-      locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
-      GridFileWriter.save(
-          locomotion,
-          Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
-          600,
-          400,
-          0,
-          20,
-          VideoUtils.EncoderFacility.JCODEC,
-          new File(args[3] + "expectedSARSA_" + args[0] + "_" + j + ".mp4"),
-          Drawers::basicWithMiniWorld
-      );
-    }
+    for (int epochs = 0; epochs < 500; epochs++) {
+      for (int j = 0; j < episodes; j++) {
+        System.out.println("Training episode " + (j + 1) + "/" + episodes + " on epoch " + (epochs + 1) + "/500");
+        locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
+        GridFileWriter.save(
+            locomotion,
+            Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
+            600,
+            400,
+            0,
+            20,
+            VideoUtils.EncoderFacility.JCODEC,
+            new File(args[3] + "expectedSARSA_" + args[0] + "_"  + epochs + "-" + j + ".mp4"),
+            Drawers::basicWithMiniWorld
+        );
+      }
 
-    rlController.stopExploration();
+      rlController.stopExploration();
 
-    // Test episodes
-    for (int j = 0; j < 5; j++) {
-      System.out.println("Testing episode " + (j + 1) + "/5");
-      locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
-      GridFileWriter.save(
-          locomotion,
-          Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
-          800,
-          400,
-          0,
-          20,
-          VideoUtils.EncoderFacility.JCODEC,
-          new File(args[3] + "test_expectedSARSA_" + args[0] + "_" + j + ".mp4"),
-          Drawers::basicWithMiniWorldAndRL
-      );
+      // Test episodes
+      for (int j = 0; j < 2; j++) {
+        System.out.println("Testing episode " + (j + 1) + "/2");
+        locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
+        GridFileWriter.save(
+            locomotion,
+            Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
+            800,
+            400,
+            0,
+            20,
+            VideoUtils.EncoderFacility.JCODEC,
+            new File(args[3] + "test_expectedSARSA_" + args[0] + "_" + epochs + "-" + j + ".mp4"),
+            Drawers::basicWithMiniWorldAndRL
+        );
+      }
+
+      rlController.setExplorationRate(0.90);
     }
   }
 
