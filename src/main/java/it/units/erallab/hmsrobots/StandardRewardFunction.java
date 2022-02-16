@@ -14,9 +14,7 @@ class StandardRewardFunction implements ToDoubleFunction<Grid<Voxel>> {
    */
 
   private final ArrayList<ArrayList<Grid.Key>> clusters;
-  private double baseline;
-
-  private double previousReward = 0;
+  private final double baseline;
 
   StandardRewardFunction(ArrayList<ArrayList<Grid.Key>> clusters, double baseline) {
     this.clusters = clusters;
@@ -38,8 +36,6 @@ class StandardRewardFunction implements ToDoubleFunction<Grid<Voxel>> {
       }
     }
     reward = reward / counter;
-    double deltaReward = reward - previousReward;
-    previousReward = reward;
-    return deltaReward;
+    return reward - baseline;
   }
 }

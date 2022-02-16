@@ -1,7 +1,6 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
 import java.util.function.Supplier;
-import java.util.random.RandomGenerator;
 
 public class TabularQLearningAgent extends AbstractQTableAgent {
 
@@ -11,7 +10,7 @@ public class TabularQLearningAgent extends AbstractQTableAgent {
       double learningRateDecay,
       double explorationRateDecay,
       double discountFactor,
-      RandomGenerator random,
+      int seed,
       Supplier<Double> initializer,
       int inputDimension,
       int outputDimension,
@@ -23,7 +22,7 @@ public class TabularQLearningAgent extends AbstractQTableAgent {
         learningRateDecay,
         explorationRateDecay,
         discountFactor,
-        random,
+        seed,
         initializer,
         inputDimension,
         outputDimension,

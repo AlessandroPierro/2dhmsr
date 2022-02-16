@@ -1,23 +1,39 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.snapshots.QTableAgentState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Random;
 import java.util.function.Supplier;
 import java.util.random.RandomGenerator;
 
-public abstract class AbstractQTableAgent implements DiscreteRL {
-  protected final double learningRateDecay;
-  protected final double explorationRateDecay;
-  protected final double discountFactor;
-  protected final RandomGenerator random;
+public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
+  @JsonProperty
   protected final int inputDimension;
+  @JsonProperty
   protected final int outputDimension;
+
+  @JsonProperty
   protected final double[][] qTable;
+  @JsonProperty
   protected final boolean episodic;
+  @JsonProperty
+  protected final double learningRateDecay;
+  @JsonProperty
+  protected final double explorationRateDecay;
+  @JsonProperty
+  protected final double discountFactor;
+  @JsonProperty
+  private final int seed;
+  @JsonProperty
   protected double learningRate;
+  @JsonProperty
   protected double explorationRate;
-  protected boolean initialized;
+  protected final RandomGenerator random;
+  protected boolean initialized = false;
   protected int previousState;
   protected int action;
 
@@ -26,7 +42,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL {
       double explorationRate,
       double learningRateDecay,
       double explorationRateDecay,
-      double discountFactor, RandomGenerator random,
+      double discountFactor, int seed,
       Supplier<Double> initializer,
       int inputDimension,
       int outputDimension,
@@ -37,7 +53,8 @@ public abstract class AbstractQTableAgent implements DiscreteRL {
     this.learningRateDecay = learningRateDecay;
     this.explorationRateDecay = explorationRateDecay;
     this.discountFactor = discountFactor;
-    this.random = random;
+    this.seed = seed;
+    this.random = new Random(seed);
     this.inputDimension = inputDimension;
     this.outputDimension = outputDimension;
     this.qTable = new double[inputDimension][outputDimension];
@@ -49,6 +66,40 @@ public abstract class AbstractQTableAgent implements DiscreteRL {
     }
 
     this.episodic = episodic;
+  }
+
+
+  public AbstractQTableAgent(
+      @JsonProperty("learningRate") double learningRate,
+      @JsonProperty("explorationRate") double explorationRate,
+      @JsonProperty("learningRateDecay") double learningRateDecay,
+      @JsonProperty("explorationRateDecay") double explorationRateDecay,
+      @JsonProperty("discountFactor") double discountFactor,
+      @JsonProperty("inputDimension") int inputDimension,
+      @JsonProperty("outputDimension") int outputDimension,
+      @JsonProperty("episodic") boolean episodic,
+      @JsonProperty("qTable") double[][] qTable,
+      @JsonProperty("seed") int seed
+  ) {
+    this.learningRate = learningRate;
+    this.explorationRate = explorationRate;
+    this.learningRateDecay = learningRateDecay;
+    this.explorationRateDecay = explorationRateDecay;
+    this.discountFactor = discountFactor;
+    this.seed = seed;
+    this.random = new Random(seed);
+    this.inputDimension = inputDimension;
+    this.outputDimension = outputDimension;
+    this.qTable = copyOf(qTable);
+    this.episodic = episodic;
+  }
+
+  private static double[][] copyOf(double[][] o) {
+    double[][] c = new double[o.length][];
+    for (int i = 0; i < o.length; i++) {
+      c[i] = Arrays.copyOf(o[i], o[i].length);
+    }
+    return c;
   }
 
   @Override
@@ -68,6 +119,10 @@ public abstract class AbstractQTableAgent implements DiscreteRL {
     }
 
     return action;
+  }
+
+  public void stopExploration() {
+    this.explorationRate = 0.0;
   }
 
   public int getInputDimension() {
@@ -120,9 +175,6 @@ public abstract class AbstractQTableAgent implements DiscreteRL {
     explorationRate = explorationRate * explorationRateDecay;
   }
 
-  protected void updateQTable(int previousState, int action, int newState, double r) {}
-
-  public void stopExploration() {
-    this.explorationRate = 0.0;
+  protected void updateQTable(int previousState, int action, int newState, double r) {
   }
 }

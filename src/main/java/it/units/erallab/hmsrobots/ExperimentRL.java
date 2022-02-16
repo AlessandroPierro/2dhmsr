@@ -26,7 +26,7 @@ import java.util.function.ToDoubleFunction;
 import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
 
 public class ExperimentRL {
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     // Settings
     double learningRate = 0.1;
     double explorationRate = 0.15;
@@ -44,8 +44,6 @@ public class ExperimentRL {
 
     // Split the robot in 4 cardinal clusters
     Set<Set<Grid.Key>> clusters = computeCardinalPoses(shape);
-    //clusters.forEach(System.out::println);
-    //System.exit(0);
 
     ArrayList<ArrayList<Grid.Key>> clustersList = new ArrayList<>();
     int i = 0;
@@ -97,12 +95,16 @@ public class ExperimentRL {
         explorationRate,
         learningRateDecay,
         explorationRateDecay,
-        discountFactor, random,
+        discountFactor, 42,
         qtableInitializer,
         (int) Math.pow(numberPartitions, inputDimension),
         outputDimension,
         true
     );
+
+    // String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.GZIPPED_JSON);
+    // System.out.println(rlString);
+    // rlAgentDiscrete = SerializationUtils.deserialize(rlString, TabularExpectedSARSAAgent.class, SerializationUtils.Mode.GZIPPED_JSON);
 
     // Create continuous agent from discrete one
     ContinuousRL rlAgent = rlAgentDiscrete.with(standardInputConverter, outputConverter);
@@ -121,7 +123,7 @@ public class ExperimentRL {
 
     // Training episodes
     for (int j = 0; j < episodes; j++) {
-      System.out.println("Training episode " + (j+1) + "/" + episodes);
+      System.out.println("Training episode " + (j + 1) + "/" + episodes);
       locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
       GridFileWriter.save(
           locomotion,
@@ -140,7 +142,7 @@ public class ExperimentRL {
 
     // Test episodes
     for (int j = 0; j < 5; j++) {
-      System.out.println("Testing episode " + (j+1) + "/5");
+      System.out.println("Testing episode " + (j + 1) + "/5");
       locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
       GridFileWriter.save(
           locomotion,

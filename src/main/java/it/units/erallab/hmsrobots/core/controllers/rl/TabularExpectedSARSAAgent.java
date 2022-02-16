@@ -1,7 +1,8 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.function.Supplier;
-import java.util.random.RandomGenerator;
 
 public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
 
@@ -11,7 +12,7 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
       double learningRateDecay,
       double explorationRateDecay,
       double discountFactor,
-      RandomGenerator random,
+      int seed,
       Supplier<Double> initializer,
       int inputDimension,
       int outputDimension,
@@ -23,11 +24,37 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
         learningRateDecay,
         explorationRateDecay,
         discountFactor,
-        random,
+        seed,
         initializer,
         inputDimension,
         outputDimension,
         episodic
+    );
+  }
+
+  public TabularExpectedSARSAAgent(
+      @JsonProperty("learningRate") double learningRate,
+      @JsonProperty("explorationRate") double explorationRate,
+      @JsonProperty("learningRateDecay") double learningRateDecay,
+      @JsonProperty("explorationRateDecay") double explorationRateDecay,
+      @JsonProperty("discountFactor") double discountFactor,
+      @JsonProperty("inputDimension") int inputDimension,
+      @JsonProperty("outputDimension") int outputDimension,
+      @JsonProperty("episodic") boolean episodic,
+      @JsonProperty("qTable") double[][] qTable,
+      @JsonProperty("seed") int seed
+  ) {
+    super(
+        learningRate,
+        explorationRate,
+        learningRateDecay,
+        explorationRateDecay,
+        discountFactor,
+        inputDimension,
+        outputDimension,
+        episodic,
+        qTable,
+        seed
     );
   }
 
