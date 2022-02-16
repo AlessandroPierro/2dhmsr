@@ -21,10 +21,7 @@ import it.units.erallab.hmsrobots.behavior.BehaviorUtils;
 import it.units.erallab.hmsrobots.core.geometry.BoundingBox;
 import it.units.erallab.hmsrobots.core.objects.Ground;
 import it.units.erallab.hmsrobots.core.objects.Robot;
-import it.units.erallab.hmsrobots.core.snapshots.MLPState;
-import it.units.erallab.hmsrobots.core.snapshots.RobotShape;
-import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
-import it.units.erallab.hmsrobots.core.snapshots.VoxelPoly;
+import it.units.erallab.hmsrobots.core.snapshots.*;
 import it.units.erallab.hmsrobots.tasks.devolocomotion.DistanceBasedDevoLocomotion;
 import it.units.erallab.hmsrobots.viewers.AllRobotFollower;
 
@@ -133,6 +130,22 @@ public class Drawers {
             footprintsAndPosture(0, 5, 4, 8)
         ),
         new InfoDrawer(string)
+    );
+  }
+
+  public static Drawer basicWithMiniWorldAndRL(String string) {
+    return Drawer.of(
+        Drawer.clip(
+            BoundingBox.of(0d, 0d, 1d, 0.5d),
+            Drawers.basicWithMiniWorld(string)
+        ),
+        Drawer.clip(
+            BoundingBox.of(0d, 0.5d, 1d, 1d),
+            Drawer.of(
+                Drawer.clear(),
+                new QTableAgentDrawer(SubtreeDrawer.Extractor.matches(QTableAgentState.class, null, null), 15d)
+            )
+        )
     );
   }
 
