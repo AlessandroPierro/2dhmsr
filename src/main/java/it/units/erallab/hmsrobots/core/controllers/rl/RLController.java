@@ -75,9 +75,12 @@ public class RLController extends AbstractController implements Snapshottable {
 
   @Override
   public Snapshot getSnapshot() {
-    Snapshot rlSnapshot = rl.getSnapshot();
-    RLControllerState rlControllerState = new RLControllerState(reward, observation, action, rlSnapshot);
-    return new Snapshot(rlControllerState, this.getClass());
+    Snapshot snapshot = new Snapshot(
+        new RLControllerState(reward, observation, action),
+        getClass()
+    );
+    snapshot.getChildren().add(rl.getSnapshot());
+    return snapshot;
   }
 
   @Override
