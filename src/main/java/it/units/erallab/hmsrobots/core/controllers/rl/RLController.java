@@ -26,6 +26,9 @@ public class RLController extends AbstractController implements Snapshottable {
   private double reward;
   private double[] action;
 
+  private double totalReward = 0.0;
+  private int totalSteps = 0;
+
   public RLController(
       ToDoubleFunction<Grid<Voxel>> rewardFunction,
       BiFunction<Double, Grid<Voxel>, double[]> observationFunction,
@@ -54,7 +57,11 @@ public class RLController extends AbstractController implements Snapshottable {
           rl.getInputDimension()
       ));
     }
+
     reward = rewardFunction.applyAsDouble(voxels);
+    totalReward += reward;
+    totalSteps += 1;
+
     action = rl.apply(t, observation, reward);
     int nOfVoxels = (int) voxels.stream().map(Grid.Entry::value).filter(Objects::nonNull).count();
     if (action.length != nOfVoxels) {
@@ -100,6 +107,10 @@ public class RLController extends AbstractController implements Snapshottable {
     if (rl instanceof AbstractQTableAgent a) {
       a.setExplorationRate(e);
     }
+  }
+
+  public double getAverageReward() {
+    return (totalSteps == 0 ? 0.0 : totalReward / totalSteps);
   }
 
 }

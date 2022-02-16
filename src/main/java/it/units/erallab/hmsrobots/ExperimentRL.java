@@ -125,7 +125,7 @@ public class ExperimentRL {
     for (int epochs = 0; epochs < 500; epochs++) {
       for (int j = 0; j < episodes; j++) {
         System.out.println("Training episode " + (j + 1) + "/" + episodes + " on epoch " + (epochs + 1) + "/500");
-        locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
+        locomotion = new Locomotion(20, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
             Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
@@ -137,6 +137,7 @@ public class ExperimentRL {
             new File(args[3] + "expectedSARSA_" + args[0] + "_"  + epochs + "-" + j + ".mp4"),
             Drawers::basicWithMiniWorld
         );
+        System.out.println("Average reward: " + rlController.getAverageReward());
       }
 
       rlController.stopExploration();
@@ -156,6 +157,7 @@ public class ExperimentRL {
             new File(args[3] + "test_expectedSARSA_" + args[0] + "_" + epochs + "-" + j + ".mp4"),
             Drawers::basicWithMiniWorldAndRL
         );
+        System.out.println("Average reward: " + rlController.getAverageReward());
       }
 
       rlController.setExplorationRate(0.90);
