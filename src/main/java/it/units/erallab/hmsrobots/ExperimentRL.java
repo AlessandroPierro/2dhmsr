@@ -136,10 +136,7 @@ public class ExperimentRL {
       );
     }
 
-    rlAgentDiscrete.setExplorationRate(0);
-    rlController = new RLController(rewardFunction, observationFunction, rlAgent, clustersList);
-    stepController = new StepController(rlController, 0.5);
-    robot = new Robot(stepController, SerializationUtils.clone(body));
+    rlController.stopExploration();
 
     // Test episodes
     for (int j = 0; j < 5; j++) {

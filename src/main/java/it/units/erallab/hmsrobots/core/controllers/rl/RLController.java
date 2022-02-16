@@ -82,9 +82,11 @@ public class RLController extends AbstractController implements Snapshottable {
 
   @Override
   public void reset() {
-    if (rl instanceof Resettable r) {
-      r.reset();
-    }
+    rl.reset();
+  }
+
+  public void stopExploration() {
+    this.rl.stopExploration();
   }
 
 }
