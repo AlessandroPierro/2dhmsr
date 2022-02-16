@@ -1,8 +1,7 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
-import it.units.erallab.hmsrobots.core.controllers.Resettable;
+import it.units.erallab.hmsrobots.core.snapshots.QTableState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
-import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 
 import java.util.function.Supplier;
 import java.util.random.RandomGenerator;

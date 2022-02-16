@@ -1,4 +1,4 @@
-package it.units.erallab.hmsrobots.core.controllers.rl;
+package it.units.erallab.hmsrobots.core.snapshots;
 
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 
