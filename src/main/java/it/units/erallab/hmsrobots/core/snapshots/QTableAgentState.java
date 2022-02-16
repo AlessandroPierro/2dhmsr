@@ -1,6 +1,8 @@
 package it.units.erallab.hmsrobots.core.snapshots;
 
-public class QTableState {
+import java.util.Arrays;
+
+public class QTableAgentState {
 
   private final double[][] qTable;
   private final int statesNumber;
@@ -12,7 +14,7 @@ public class QTableState {
   private final double discountFactor;
 
 
-  public QTableState(
+  public QTableAgentState(
       double[][] qTable,
       int statesNumber,
       int actionsNumber,
@@ -22,7 +24,7 @@ public class QTableState {
       double explorationRateDecay,
       double discountFactor
   ) {
-    this.qTable = qTable;
+    this.qTable = copyOf(qTable);
     this.statesNumber = statesNumber;
     this.actionsNumber = actionsNumber;
     this.learningRate = learningRate;
@@ -30,6 +32,14 @@ public class QTableState {
     this.learningRateDecay = learningRateDecay;
     this.explorationRateDecay = explorationRateDecay;
     this.discountFactor = discountFactor;
+  }
+
+  private static double[][] copyOf(double[][] o) {
+    double[][] c = new double[o.length][];
+    for (int i = 0; i < o.length; i++) {
+      c[i] = Arrays.copyOf(o[i], o[i].length);
+    }
+    return c;
   }
 
   public int getActionsNumber() {

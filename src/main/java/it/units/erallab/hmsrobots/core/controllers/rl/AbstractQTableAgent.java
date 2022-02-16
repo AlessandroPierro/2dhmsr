@@ -1,6 +1,6 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
-import it.units.erallab.hmsrobots.core.snapshots.QTableState;
+import it.units.erallab.hmsrobots.core.snapshots.QTableAgentState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 
 import java.util.function.Supplier;
@@ -100,7 +100,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL {
 
   @Override
   public Snapshot getSnapshot() {
-    QTableState content = new QTableState(
+    QTableAgentState content = new QTableAgentState(
         qTable,
         inputDimension,
         outputDimension,
