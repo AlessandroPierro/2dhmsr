@@ -3,6 +3,8 @@ package it.units.erallab.hmsrobots.core.controllers.rl;
 import it.units.erallab.hmsrobots.core.controllers.AbstractController;
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import it.units.erallab.hmsrobots.util.Grid;
 
 import java.util.ArrayList;
@@ -10,7 +12,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.ToDoubleFunction;
 
-public class RLController extends AbstractController {
+public class RLController extends AbstractController implements Snapshottable {
 
   private final ToDoubleFunction<Grid<Voxel>> rewardFunction;
   private final BiFunction<Double, Grid<Voxel>, double[]> observationFunction;
@@ -18,6 +20,10 @@ public class RLController extends AbstractController {
   private final ArrayList<ArrayList<Grid.Key>> clusters;
   private Grid<Double> output;
   private boolean initialized = false;
+
+  private double[] observation;
+  private double reward;
+  private double[] action;
 
   public RLController(
       ToDoubleFunction<Grid<Voxel>> rewardFunction,
@@ -39,7 +45,7 @@ public class RLController extends AbstractController {
       output = Grid.create(voxels.getW(), voxels.getH());
       initialized = true;
     }
-    double[] observation = observationFunction.apply(t, voxels);
+    observation = observationFunction.apply(t, voxels);
     if (observation.length != rl.getInputDimension()) {
       throw new IllegalArgumentException(String.format(
           "Observation dim different than expected: %d vs %d",
@@ -47,8 +53,8 @@ public class RLController extends AbstractController {
           rl.getInputDimension()
       ));
     }
-    double reward = rewardFunction.applyAsDouble(voxels);
-    double[] action = rl.apply(t, observation, reward);
+    reward = rewardFunction.applyAsDouble(voxels);
+    action = rl.apply(t, observation, reward);
     int nOfVoxels = (int) voxels.stream().map(Grid.Entry::value).filter(Objects::nonNull).count();
     if (action.length != nOfVoxels) {
       throw new IllegalArgumentException(String.format(
@@ -65,6 +71,13 @@ public class RLController extends AbstractController {
       }
     }
     return output;
+  }
+
+  @Override
+  public Snapshot getSnapshot() {
+    Snapshot rlSnapshot = rl.getSnapshot();
+    RLControllerState rlControllerState = new RLControllerState(reward, observation, action, rlSnapshot);
+    return new Snapshot(rlControllerState, this.getClass());
   }
 
   @Override

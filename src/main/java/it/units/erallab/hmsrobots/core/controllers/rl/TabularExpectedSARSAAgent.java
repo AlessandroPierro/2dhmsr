@@ -1,11 +1,13 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 
 import java.util.function.Supplier;
 import java.util.random.RandomGenerator;
 
-public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
+public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable, Snapshottable {
   private final double learningRateDecay;
   private final double explorationRateDecay;
   private final double discountFactor;
@@ -98,10 +100,29 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
   }
 
   @Override
+  public Snapshot getSnapshot() {
+    QTableState content = new QTableState(
+        qTable,
+        inputDimension,
+        outputDimension,
+        learningRate,
+        explorationRate,
+        learningRateDecay,
+        explorationRateDecay,
+        discountFactor
+    );
+    return new Snapshot(content, this.getClass());
+  }
+
+  @Override
   public void reset() {
     initialized = false;
     learningRate = learningRate * learningRateDecay;
     explorationRate = explorationRate * explorationRateDecay;
+  }
+
+  public void setExplorationRate(double explorationRate) {
+    this.explorationRate = explorationRate;
   }
 
   private void updateQTable(int previousState, int action, int newState, double r) {
@@ -112,9 +133,5 @@ public class TabularExpectedSARSAAgent implements DiscreteRL, Resettable {
       expectedSARSA += qTable[newState][possibleAction] * (possibleAction == maxQAction ? 0.9 : (0.1 / (outputDimension - 1)));
     }
     qTable[previousState][action] = q + learningRate * (r + discountFactor * expectedSARSA - q);
-  }
-
-  public void setExplorationRate(double explorationRate) {
-    this.explorationRate = explorationRate;
   }
 }

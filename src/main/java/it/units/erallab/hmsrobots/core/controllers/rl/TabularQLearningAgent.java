@@ -1,22 +1,22 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 
 import java.util.function.Supplier;
 import java.util.random.RandomGenerator;
 
-public class TabularQLearningAgent implements DiscreteRL, Resettable {
-  private double learningRate;
-  private double explorationRate;
+public class TabularQLearningAgent implements DiscreteRL, Resettable, Snapshottable {
   private final double learningRateDecay;
   private final double explorationRateDecay;
   private final double discountFactor;
   private final RandomGenerator random;
-
   private final int inputDimension;
   private final int outputDimension;
-
   private final double[][] qTable;
+  private double learningRate;
+  private double explorationRate;
   private boolean initialized;
   private int previousState;
   private int action;
@@ -70,25 +70,6 @@ public class TabularQLearningAgent implements DiscreteRL, Resettable {
     return outputDimension;
   }
 
-  @Override
-  public void reset() {
-    initialized = false;
-  }
-
-  private void updateQTable(int previousState, int action, int newState, double r) {
-    double q = qTable[previousState][action];
-    double maxQ = getMaxQ(newState);
-    qTable[previousState][action] = q + learningRate * (r + discountFactor * maxQ - q);
-  }
-
-  private double getMaxQ(int state) {
-    double maxQ = Double.NEGATIVE_INFINITY;
-    for (int action = 0; action < outputDimension; action++) {
-      maxQ = Math.max(maxQ, qTable[state][action]);
-    }
-    return maxQ;
-  }
-
   private int getMaxAction(int state) {
     double maxQ = Double.NEGATIVE_INFINITY;
     int maxAction = 0;
@@ -99,5 +80,39 @@ public class TabularQLearningAgent implements DiscreteRL, Resettable {
       }
     }
     return maxAction;
+  }
+
+  private double getMaxQ(int state) {
+    double maxQ = Double.NEGATIVE_INFINITY;
+    for (int action = 0; action < outputDimension; action++) {
+      maxQ = Math.max(maxQ, qTable[state][action]);
+    }
+    return maxQ;
+  }
+
+  @Override
+  public Snapshot getSnapshot() {
+    QTableState content = new QTableState(
+        qTable,
+        inputDimension,
+        outputDimension,
+        learningRate,
+        explorationRate,
+        learningRateDecay,
+        explorationRateDecay,
+        discountFactor
+    );
+    return new Snapshot(content, this.getClass());
+  }
+
+  @Override
+  public void reset() {
+    initialized = false;
+  }
+
+  private void updateQTable(int previousState, int action, int newState, double r) {
+    double q = qTable[previousState][action];
+    double maxQ = getMaxQ(newState);
+    qTable[previousState][action] = q + learningRate * (r + discountFactor * maxQ - q);
   }
 }
