@@ -145,13 +145,13 @@ public class ExperimentRL {
       GridFileWriter.save(
           locomotion,
           Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
-          600,
+          800,
           400,
           0,
           20,
           VideoUtils.EncoderFacility.JCODEC,
           new File(args[3] + "test_expectedSARSA_" + args[0] + "_" + j + ".mp4"),
-          Drawers::basicWithMiniWorldAndSpectra
+          Drawers::basicWithMiniWorldAndRL
       );
     }
   }
