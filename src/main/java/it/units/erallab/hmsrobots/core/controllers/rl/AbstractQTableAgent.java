@@ -125,6 +125,10 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
     this.explorationRate = 0.0;
   }
 
+  public void setExplorationRate(double explorationRate) {
+    this.explorationRate = explorationRate;
+  }
+
   public int getInputDimension() {
     return inputDimension;
   }

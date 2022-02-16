@@ -1,6 +1,7 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
 import it.units.erallab.hmsrobots.core.controllers.AbstractController;
+import it.units.erallab.hmsrobots.core.controllers.Resettable;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.snapshots.RLControllerState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
@@ -86,10 +87,19 @@ public class RLController extends AbstractController implements Snapshottable {
   @Override
   public void reset() {
     rl.reset();
+    if (rewardFunction instanceof Resettable r) {
+      r.reset();
+    }
   }
 
   public void stopExploration() {
     this.rl.stopExploration();
+  }
+
+  public void setExplorationRate(double e) {
+    if (rl instanceof AbstractQTableAgent a) {
+      a.setExplorationRate(e);
+    }
   }
 
 }
