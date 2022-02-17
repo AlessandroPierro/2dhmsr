@@ -14,7 +14,9 @@ public class TabularQLearningAgent extends AbstractQTableAgent {
       Supplier<Double> initializer,
       int inputDimension,
       int outputDimension,
-      boolean episodic
+      boolean episodic,
+      int stateSpaceDimenstion,
+      int actionSpaceDimension
   ) {
     super(
         learningRate,
@@ -26,7 +28,9 @@ public class TabularQLearningAgent extends AbstractQTableAgent {
         initializer,
         inputDimension,
         outputDimension,
-        episodic
+        episodic,
+        stateSpaceDimenstion,
+        actionSpaceDimension
     );
   }
 

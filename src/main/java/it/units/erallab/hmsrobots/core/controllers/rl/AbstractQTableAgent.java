@@ -15,6 +15,10 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   protected final int inputDimension;
   @JsonProperty
   protected final int outputDimension;
+  @JsonProperty
+  protected final int stateSpaceDimension;
+  @JsonProperty
+  protected final int actionSpaceDimension;
 
   @JsonProperty
   protected final double[][] qTable;
@@ -46,7 +50,9 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
       Supplier<Double> initializer,
       int inputDimension,
       int outputDimension,
-      boolean episodic
+      boolean episodic,
+      int stateSpaceDimension,
+      int actionSpaceDimension
   ) {
     this.learningRate = learningRate;
     this.explorationRate = explorationRate;
@@ -57,10 +63,12 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
     this.random = new Random(seed);
     this.inputDimension = inputDimension;
     this.outputDimension = outputDimension;
-    this.qTable = new double[inputDimension][outputDimension];
+    this.stateSpaceDimension = stateSpaceDimension;
+    this.actionSpaceDimension = actionSpaceDimension;
+    this.qTable = new double[stateSpaceDimension][actionSpaceDimension];
 
-    for (int i = 0; i < inputDimension; i++) {
-      for (int j = 0; j < outputDimension; j++) {
+    for (int i = 0; i < stateSpaceDimension; i++) {
+      for (int j = 0; j < actionSpaceDimension; j++) {
         qTable[i][j] = initializer.get();
       }
     }
@@ -79,7 +87,9 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
       @JsonProperty("outputDimension") int outputDimension,
       @JsonProperty("episodic") boolean episodic,
       @JsonProperty("qTable") double[][] qTable,
-      @JsonProperty("seed") int seed
+      @JsonProperty("seed") int seed,
+      @JsonProperty("stateSpaceDimension") int stateSpaceDimension,
+      @JsonProperty("actionSpaceDimension") int actionSpaceDimension
   ) {
     this.learningRate = learningRate;
     this.explorationRate = explorationRate;
@@ -92,6 +102,8 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
     this.outputDimension = outputDimension;
     this.qTable = copyOf(qTable);
     this.episodic = episodic;
+    this.stateSpaceDimension = stateSpaceDimension;
+    this.actionSpaceDimension = actionSpaceDimension;
   }
 
   private static double[][] copyOf(double[][] o) {
@@ -110,7 +122,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
       initialized = true;
     }
 
-    action = random.nextDouble() < explorationRate ? random.nextInt(outputDimension) : getMaxAction(input);
+    action = random.nextDouble() < explorationRate ? random.nextInt(actionSpaceDimension) : getMaxAction(input);
     previousState = input;
 
     if (!episodic) {
@@ -140,7 +152,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   protected int getMaxAction(int state) {
     double maxQ = Double.NEGATIVE_INFINITY;
     int maxAction = 0;
-    for (int action = 0; action < outputDimension; action++) {
+    for (int action = 0; action < actionSpaceDimension; action++) {
       if (qTable[state][action] > maxQ) {
         maxQ = qTable[state][action];
         maxAction = action;
@@ -151,7 +163,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
 
   protected double getMaxQ(int state) {
     double maxQ = Double.NEGATIVE_INFINITY;
-    for (int action = 0; action < outputDimension; action++) {
+    for (int action = 0; action < actionSpaceDimension; action++) {
       maxQ = Math.max(maxQ, qTable[state][action]);
     }
     return maxQ;
@@ -161,8 +173,8 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   public Snapshot getSnapshot() {
     QTableAgentState content = new QTableAgentState(
         qTable,
-        inputDimension,
-        outputDimension,
+        stateSpaceDimension,
+        actionSpaceDimension,
         learningRate,
         explorationRate,
         learningRateDecay,

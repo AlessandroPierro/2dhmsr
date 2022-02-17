@@ -16,7 +16,9 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
       Supplier<Double> initializer,
       int inputDimension,
       int outputDimension,
-      boolean episodic
+      boolean episodic,
+      int stateSpaceDimension,
+      int actionSpaceDimension
   ) {
     super(
         learningRate,
@@ -28,7 +30,9 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
         initializer,
         inputDimension,
         outputDimension,
-        episodic
+        episodic,
+        stateSpaceDimension,
+        actionSpaceDimension
     );
   }
 
@@ -42,7 +46,9 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
       @JsonProperty("outputDimension") int outputDimension,
       @JsonProperty("episodic") boolean episodic,
       @JsonProperty("qTable") double[][] qTable,
-      @JsonProperty("seed") int seed
+      @JsonProperty("seed") int seed,
+      @JsonProperty("stateSpaceDimension") int stateSpaceDimension,
+      @JsonProperty("actionSpaceDimension") int actionSpaceDimension
   ) {
     super(
         learningRate,
@@ -54,7 +60,9 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
         outputDimension,
         episodic,
         qTable,
-        seed
+        seed,
+        stateSpaceDimension,
+        actionSpaceDimension
     );
   }
 
@@ -63,8 +71,8 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
     double q = qTable[previousState][action];
     int maxQAction = getMaxAction(newState);
     double expectedSARSA = 0.0;
-    for (int possibleAction = 0; possibleAction < outputDimension; possibleAction++) {
-      expectedSARSA += qTable[newState][possibleAction] * (explorationRate / outputDimension + (possibleAction == maxQAction ? 1-explorationRate : 0.0));
+    for (int possibleAction = 0; possibleAction < actionSpaceDimension; possibleAction++) {
+      expectedSARSA += qTable[newState][possibleAction] * (explorationRate / actionSpaceDimension + (possibleAction == maxQAction ? 1-explorationRate : 0.0));
     }
     qTable[previousState][action] = q + learningRate * (r + discountFactor * expectedSARSA - q);
   }

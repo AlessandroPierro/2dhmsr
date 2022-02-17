@@ -99,7 +99,9 @@ public class ExperimentRL {
         qtableInitializer,
         (int) Math.pow(numberPartitions, inputDimension),
         outputDimension,
-        true
+        true,
+        (int) Math.pow(numberPartitions, inputDimension),
+        (int) Math.pow(2, 4)
     );
 
     // String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.GZIPPED_JSON);
@@ -125,7 +127,7 @@ public class ExperimentRL {
     for (int epochs = 0; epochs < 500; epochs++) {
       for (int j = 0; j < episodes; j++) {
         System.out.println("Training episode " + (j + 1) + "/" + episodes + " on epoch " + (epochs + 1) + "/500");
-        locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
+        locomotion = new Locomotion(10, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
             Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
@@ -149,7 +151,7 @@ public class ExperimentRL {
         GridFileWriter.save(
             locomotion,
             Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
-            800,
+            600,
             400,
             0,
             20,
