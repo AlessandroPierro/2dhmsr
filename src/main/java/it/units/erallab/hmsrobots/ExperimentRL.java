@@ -30,7 +30,7 @@ public class ExperimentRL {
     // Settings
     double learningRate = 0.25;
     double explorationRate = 0.9;
-    double learningRateDecay = 1.0;
+    double learningRateDecay = 0.995;
     double explorationRateDecay = 1.0;
     double discountFactor = 0.7;
 
