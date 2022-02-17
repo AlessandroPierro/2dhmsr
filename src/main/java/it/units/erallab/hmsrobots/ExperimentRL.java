@@ -127,7 +127,7 @@ public class ExperimentRL {
     for (int epochs = 0; epochs < 500; epochs++) {
       for (int j = 0; j < episodes; j++) {
         System.out.println("Training episode " + (j + 1) + "/" + episodes + " on epoch " + (epochs + 1) + "/500");
-        locomotion = new Locomotion(10, Locomotion.createTerrain("flat"), new Settings());
+        locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
             Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
