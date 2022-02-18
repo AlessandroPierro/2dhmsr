@@ -1,40 +1,48 @@
 package it.units.erallab.hmsrobots;
 
 import it.units.erallab.hmsrobots.core.objects.Voxel;
+import it.units.erallab.hmsrobots.core.sensors.CompositeSensor;
 import it.units.erallab.hmsrobots.core.sensors.Sensor;
-import it.units.erallab.hmsrobots.core.sensors.Velocity;
 import it.units.erallab.hmsrobots.util.Grid;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
-class StandardObservationFunction implements BiFunction<Double, Grid<Voxel>, double[]> {
+class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, double[]> {
 
+  private final List<Class> usedSensors;
   private final ArrayList<ArrayList<Grid.Key>> clusters;
   private final int numberClusters;
   private final int[] clustersDimensions;
   private final int sensorsDimension;
   private final int outputDimension;
 
-  StandardObservationFunction(
+  ClusteredObservationFunction(
       Grid<Voxel> body,
+      List<Class> usedSensors,
       ArrayList<ArrayList<Grid.Key>> clusters
   ) {
+    this.usedSensors = usedSensors;
     this.clusters = clusters;
 
-    // Compute the outputDimension
+    // Computing dimension based on the number of used sensors
     Grid.Key key = clusters.get(0).get(0);
-    AtomicInteger size = new AtomicInteger();
-    body.get(key.x(), key.y()).getSensors().forEach(sensor -> {
-      if ((sensor.getClass() != Velocity.class)) {
-        size.addAndGet(sensor.getDomains().length);
+    int size = 0;
+
+    for (Sensor sensor : body.get(key.x(), key.y()).getSensors()) {
+      while (sensor instanceof CompositeSensor) {
+        sensor = ((CompositeSensor) sensor).getSensor();
       }
-    });
+      if (usedSensors.contains(sensor.getClass())) {
+        size += sensor.getDomains().length;
+      }
+    }
 
     this.numberClusters = clusters.size();
-    this.sensorsDimension = size.get();
+    this.sensorsDimension = size;
     this.outputDimension = numberClusters * sensorsDimension;
 
     // Compute the dimension of each cluster
@@ -60,7 +68,10 @@ class StandardObservationFunction implements BiFunction<Double, Grid<Voxel>, dou
         Voxel voxel = body.get(key.x(), key.y());
         int j = 0;
         for (Sensor sensor : voxel.getSensors()) {
-          if (sensor.getClass() != Velocity.class) {
+          while (sensor instanceof CompositeSensor) {
+            sensor = ((CompositeSensor) sensor).getSensor();
+          }
+          if (usedSensors.contains(sensor.getClass())) {
             for (double value : sensor.getReadings()) {
               output[i * sensorsDimension + j] += value;
               j += 1;
