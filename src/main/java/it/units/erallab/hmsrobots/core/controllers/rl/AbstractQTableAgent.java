@@ -12,10 +12,6 @@ import java.util.random.RandomGenerator;
 
 public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   @JsonProperty
-  protected final int inputDimension;
-  @JsonProperty
-  protected final int outputDimension;
-  @JsonProperty
   protected final int stateSpaceDimension;
   @JsonProperty
   protected final int actionSpaceDimension;
@@ -48,8 +44,6 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
       double explorationRateDecay,
       double discountFactor, int seed,
       Supplier<Double> initializer,
-      int inputDimension,
-      int outputDimension,
       boolean episodic,
       int stateSpaceDimension,
       int actionSpaceDimension
@@ -61,8 +55,6 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
     this.discountFactor = discountFactor;
     this.seed = seed;
     this.random = new Random(seed);
-    this.inputDimension = inputDimension;
-    this.outputDimension = outputDimension;
     this.stateSpaceDimension = stateSpaceDimension;
     this.actionSpaceDimension = actionSpaceDimension;
     this.qTable = new double[stateSpaceDimension][actionSpaceDimension];
@@ -83,8 +75,6 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
       @JsonProperty("learningRateDecay") double learningRateDecay,
       @JsonProperty("explorationRateDecay") double explorationRateDecay,
       @JsonProperty("discountFactor") double discountFactor,
-      @JsonProperty("inputDimension") int inputDimension,
-      @JsonProperty("outputDimension") int outputDimension,
       @JsonProperty("episodic") boolean episodic,
       @JsonProperty("qTable") double[][] qTable,
       @JsonProperty("seed") int seed,
@@ -98,8 +88,6 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
     this.discountFactor = discountFactor;
     this.seed = seed;
     this.random = new Random(seed);
-    this.inputDimension = inputDimension;
-    this.outputDimension = outputDimension;
     this.qTable = copyOf(qTable);
     this.episodic = episodic;
     this.stateSpaceDimension = stateSpaceDimension;
@@ -142,11 +130,11 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   }
 
   public int getInputDimension() {
-    return inputDimension;
+    return stateSpaceDimension;
   }
 
   public int getOutputDimension() {
-    return outputDimension;
+    return actionSpaceDimension;
   }
 
   protected int getMaxAction(int state) {
