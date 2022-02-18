@@ -31,9 +31,9 @@ public class TabularQLearningAgent extends AbstractQTableAgent {
   }
 
   @Override
-  protected void updateQTable(int previousState, int action, int newState, double r) {
+  protected void updateQTable(int previousState, int action, double reward, int newState) {
     double q = qTable[previousState][action];
     double maxQ = getMaxQ(newState);
-    qTable[previousState][action] = q + learningRate * (r + discountFactor * maxQ - q);
+    qTable[previousState][action] = q + learningRate * (reward + discountFactor * maxQ - q);
   }
 }

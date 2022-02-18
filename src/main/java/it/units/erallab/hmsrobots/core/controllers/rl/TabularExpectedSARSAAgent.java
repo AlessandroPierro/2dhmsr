@@ -59,13 +59,13 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
   }
 
   @Override
-  protected void updateQTable(int previousState, int action, int newState, double r) {
+  protected void updateQTable(int previousState, int action, double reward, int newState) {
     double q = qTable[previousState][action];
     int maxQAction = getMaxAction(newState);
     double expectedSARSA = 0.0;
     for (int possibleAction = 0; possibleAction < actionSpaceDimension; possibleAction++) {
       expectedSARSA += qTable[newState][possibleAction] * (explorationRate / actionSpaceDimension + (possibleAction == maxQAction ? 1-explorationRate : 0.0));
     }
-    qTable[previousState][action] = q + learningRate * (r + discountFactor * expectedSARSA - q);
+    qTable[previousState][action] = q + learningRate * (reward + discountFactor * expectedSARSA - q);
   }
 }

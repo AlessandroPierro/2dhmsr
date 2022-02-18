@@ -103,15 +103,15 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   }
 
   @Override
-  public int apply(double t, int input, double r) {
+  public int apply(double t, int newState, double reward) {
     if (initialized) {
-      updateQTable(previousState, action, input, r);
+      updateQTable(previousState, action, reward, newState);
     } else {
       initialized = true;
     }
 
-    action = random.nextDouble() < explorationRate ? random.nextInt(actionSpaceDimension) : getMaxAction(input);
-    previousState = input;
+    action = random.nextDouble() < explorationRate ? random.nextInt(actionSpaceDimension) : getMaxAction(newState);
+    previousState = newState;
 
     if (!episodic) {
       learningRate = learningRate * learningRateDecay;
@@ -175,10 +175,12 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   @Override
   public void reset() {
     initialized = false;
-    learningRate = learningRate * learningRateDecay;
-    explorationRate = explorationRate * explorationRateDecay;
+    if (episodic) {
+      learningRate = learningRate * learningRateDecay;
+      explorationRate = explorationRate * explorationRateDecay;
+    }
   }
 
-  protected void updateQTable(int previousState, int action, int newState, double r) {
+  protected void updateQTable(int previousState, int action, double reward, int newState) {
   }
 }
