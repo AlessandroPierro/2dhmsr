@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 import static java.lang.Math.abs;
 
-class StandardOutputConverter implements DiscreteRL.OutputConverter {
+class BinaryOutputConverter implements DiscreteRL.OutputConverter {
   private final int outputDimension;
   private final int numberClusters;
 
@@ -17,7 +17,7 @@ class StandardOutputConverter implements DiscreteRL.OutputConverter {
   private final ArrayList<ArrayList<Grid.Key>> clusters;
 
 
-  StandardOutputConverter(
+  BinaryOutputConverter(
       int outputDimension,
       ArrayList<ArrayList<Grid.Key>> clusters,
       double force
@@ -29,7 +29,7 @@ class StandardOutputConverter implements DiscreteRL.OutputConverter {
     this.force = abs(force);
   }
 
-  StandardOutputConverter(
+  BinaryOutputConverter(
       int outputDimension,
       ArrayList<ArrayList<Grid.Key>> clusters
   ) {
