@@ -22,7 +22,7 @@ public class QTableAgentDrawer extends MemoryDrawer<QTableAgentState> {
   }
 
   public QTableAgentDrawer(Extractor extractor, double windowT) {
-    this(extractor, windowT, DrawingUtils.Colors.DATA_NEGATIVE, DrawingUtils.Colors.DATA_ZERO);
+    this(extractor, windowT, DrawingUtils.Colors.DATA_ZERO, DrawingUtils.Colors.DATA_NEGATIVE);
   }
 
   private void drawHeatmap(double[][] qTable, BoundingBox bb, Graphics2D g) {
