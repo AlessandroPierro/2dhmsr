@@ -48,8 +48,8 @@ public class StepController extends AbstractController implements Snapshottable 
 
   @Override
   public Grid<Double> computeControlSignals(double t, Grid<Voxel> voxels) {
-    Grid<Double> controlSignals = innerController.computeControlSignals(t, voxels);
     if (t - lastT >= stepT || lastControlSignals == null) {
+      Grid<Double> controlSignals = innerController.computeControlSignals(t, voxels);
       lastControlSignals = Grid.create(controlSignals, v -> v);
       lastT = t;
     }
