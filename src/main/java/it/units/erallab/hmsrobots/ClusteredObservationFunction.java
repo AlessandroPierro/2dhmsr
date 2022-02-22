@@ -7,13 +7,12 @@ import it.units.erallab.hmsrobots.util.Grid;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, double[]> {
 
-  private final List<Class> usedSensors;
+  private final Set<Class<? extends Sensor>> usedSensors;
   private final ArrayList<ArrayList<Grid.Key>> clusters;
   private final int numberClusters;
   private final int[] clustersDimensions;
@@ -22,7 +21,7 @@ class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, do
 
   ClusteredObservationFunction(
       Grid<Voxel> body,
-      List<Class> usedSensors,
+      Set<Class<? extends Sensor>> usedSensors,
       ArrayList<ArrayList<Grid.Key>> clusters
   ) {
     this.usedSensors = usedSensors;
@@ -68,10 +67,11 @@ class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, do
         Voxel voxel = body.get(key.x(), key.y());
         int j = 0;
         for (Sensor sensor : voxel.getSensors()) {
-          while (sensor instanceof CompositeSensor) {
-            sensor = ((CompositeSensor) sensor).getSensor();
+          Sensor sensorTest = sensor;
+          while (sensorTest instanceof CompositeSensor) {
+            sensorTest = ((CompositeSensor) sensorTest).getSensor();
           }
-          if (usedSensors.contains(sensor.getClass())) {
+          if (usedSensors.contains(sensorTest.getClass())) {
             for (double value : sensor.getReadings()) {
               output[i * sensorsDimension + j] += value;
               j += 1;

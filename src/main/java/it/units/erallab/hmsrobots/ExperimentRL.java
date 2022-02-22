@@ -8,6 +8,7 @@ import it.units.erallab.hmsrobots.core.controllers.rl.TabularExpectedSARSAAgent;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.AreaRatio;
+import it.units.erallab.hmsrobots.core.sensors.Sensor;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
@@ -44,7 +45,8 @@ public class ExperimentRL {
 
     // Create the list of sensors to be used by RL
     // TODO Check for better usage
-    List<Class> usedSensors = List.of(AreaRatio.class);
+    Set<Class<? extends Sensor>> usedSensors = new HashSet<>();
+    usedSensors.add(AreaRatio.class);
 
     // Split the robot in 4 cardinal clusters
     Set<Set<Grid.Key>> clusters = computeCardinalPoses(shape);
