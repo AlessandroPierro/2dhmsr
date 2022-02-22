@@ -39,7 +39,7 @@ public class ExperimentRL {
     int episodes = Integer.parseInt(args[2]);
 
     // Create the robot
-    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy-0.01")
+    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy-0")
         .apply(RobotUtils.buildShape(args[0]));
     Grid<Boolean> shape = Grid.create(body, Objects::nonNull);
 
@@ -84,7 +84,7 @@ public class ExperimentRL {
     //);
 
     // Create binary input converter
-    DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(inputDimension, 0.95);
+    DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(inputDimension, 0.5);
 
     // Create output converter
     DiscreteRL.OutputConverter outputConverter;
@@ -152,7 +152,7 @@ public class ExperimentRL {
       // Test episodes
       for (int j = 0; j < 1; j++) {
         System.out.println("Testing episode " + (j + 1) + "/2");
-        locomotion = new Locomotion(10, Locomotion.createTerrain("flat"), new Settings());
+        locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
             Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
