@@ -121,14 +121,6 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
     return action;
   }
 
-  public void stopExploration() {
-    this.explorationRate = 0.0;
-  }
-
-  public void setExplorationRate(double explorationRate) {
-    this.explorationRate = explorationRate;
-  }
-
   public int getInputDimension() {
     return stateSpaceDimension;
   }
@@ -182,5 +174,21 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   }
 
   protected void updateQTable(int previousState, int action, double reward, int newState) {
+  }
+
+  void setExplorationRate(double explorationRate) {
+    this.explorationRate = explorationRate;
+  }
+
+  void setLearningRate(double learningRate) {
+    this.learningRate = learningRate;
+  }
+
+  double getExplorationRate() {
+    return explorationRate;
+  }
+
+  double getLearningRate() {
+    return learningRate;
   }
 }

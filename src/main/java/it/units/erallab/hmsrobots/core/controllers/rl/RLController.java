@@ -99,13 +99,29 @@ public class RLController extends AbstractController implements Snapshottable {
     }
   }
 
-  public void stopExploration() {
-    this.rl.stopExploration();
+  public double getExplorationRate() {
+    if (rl instanceof AbstractQTableAgent a) {
+      return a.getExplorationRate();
+    }
+    return 0;
   }
 
   public void setExplorationRate(double e) {
     if (rl instanceof AbstractQTableAgent a) {
       a.setExplorationRate(e);
+    }
+  }
+
+  public double getLearningRate() {
+    if (rl instanceof AbstractQTableAgent a) {
+      return a.getLearningRate();
+    }
+    return 0;
+  }
+
+  public void setLearningRate(double l) {
+    if (rl instanceof AbstractQTableAgent a) {
+      a.setLearningRate(l);
     }
   }
 

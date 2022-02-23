@@ -15,7 +15,6 @@ public interface DiscreteRL extends IOSized, Snapshottable, Resettable {
   }
 
   int apply(double t, int input, double r);
-  void stopExploration();
 
   default ContinuousRL with(InputConverter inputConverter, OutputConverter outputConverter) {
     DiscreteRL inner = this;
@@ -32,9 +31,6 @@ public interface DiscreteRL extends IOSized, Snapshottable, Resettable {
       public double[] apply(double t, double[] state, double reward) {
         return outputConverter.apply(inner.apply(t, inputConverter.apply(state), reward));
       }
-
-      @Override
-      public void stopExploration() { }
 
       @Override
       public int getInputDimension() {
