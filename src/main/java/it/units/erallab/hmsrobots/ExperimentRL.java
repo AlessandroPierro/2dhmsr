@@ -1,10 +1,7 @@
 package it.units.erallab.hmsrobots;
 
 import it.units.erallab.hmsrobots.core.controllers.StepController;
-import it.units.erallab.hmsrobots.core.controllers.rl.ContinuousRL;
-import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
-import it.units.erallab.hmsrobots.core.controllers.rl.RLController;
-import it.units.erallab.hmsrobots.core.controllers.rl.TabularExpectedSARSAAgent;
+import it.units.erallab.hmsrobots.core.controllers.rl.*;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.AreaRatio;
@@ -17,9 +14,10 @@ import it.units.erallab.hmsrobots.viewers.GridFileWriter;
 import it.units.erallab.hmsrobots.viewers.NamedValue;
 import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
+import org.apache.commons.math3.analysis.function.Abs;
 import org.dyn4j.dynamics.Settings;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
@@ -27,7 +25,7 @@ import java.util.function.ToDoubleFunction;
 import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
 
 public class ExperimentRL {
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     // Settings
     double learningRate = 0.1;
     double explorationRate = 0.8;
@@ -95,7 +93,7 @@ public class ExperimentRL {
 
     // Create QTable initializer
     double averageQ = 0.0;
-    double stdQ = 0.2;
+    double stdQ = 0.0;
     Supplier<Double> qtableInitializer = () -> averageQ + stdQ * random.nextGaussian();
 
     // Instantiate Tabular Q-Learning agent
@@ -149,10 +147,11 @@ public class ExperimentRL {
         System.out.println("Average reward: " + rlController.getAverageReward());
       }
 
-      double currentExplorationRate = rlController.getExplorationRate();
-      double currentLearningRate = rlController.getLearningRate();
-      rlController.setExplorationRate(0.0);
-      rlController.setLearningRate(0.0);
+      double currentExplorationRate = rlAgentDiscrete.getExplorationRate();
+      double currentLearningRate = rlAgentDiscrete.getLearningRate();
+
+      rlAgentDiscrete.setExplorationRate(0);
+      rlAgentDiscrete.setLearningRate(0);
 
       // Test episodes
       for (int j = 0; j < 1; j++) {
@@ -172,8 +171,18 @@ public class ExperimentRL {
         System.out.println("Average reward: " + rlController.getAverageReward());
       }
 
-      rlController.setExplorationRate(currentExplorationRate);
-      rlController.setLearningRate(currentLearningRate);
+      rlAgentDiscrete.setExplorationRate(currentExplorationRate);
+      rlAgentDiscrete.setLearningRate(currentLearningRate);
+    }
+
+    // Serialize agent
+    String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.JSON);
+    // save to file
+    try {
+      FileWriter file = new FileWriter(args[3] + "rlagent.json");
+      file.write(rlString);
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 

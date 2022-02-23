@@ -50,8 +50,6 @@ class AveragedRewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettabl
       totalReward += reward;
     }
 
-    System.out.println(totalReward);
-
     return totalReward;
   }
 

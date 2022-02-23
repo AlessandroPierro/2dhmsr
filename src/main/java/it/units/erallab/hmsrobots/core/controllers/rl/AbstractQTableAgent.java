@@ -176,19 +176,19 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   protected void updateQTable(int previousState, int action, double reward, int newState) {
   }
 
-  void setExplorationRate(double explorationRate) {
+  public void setExplorationRate(double explorationRate) {
     this.explorationRate = explorationRate;
   }
 
-  void setLearningRate(double learningRate) {
+  public void setLearningRate(double learningRate) {
     this.learningRate = learningRate;
   }
 
-  double getExplorationRate() {
+  public double getExplorationRate() {
     return explorationRate;
   }
 
-  double getLearningRate() {
+  public double getLearningRate() {
     return learningRate;
   }
 }
