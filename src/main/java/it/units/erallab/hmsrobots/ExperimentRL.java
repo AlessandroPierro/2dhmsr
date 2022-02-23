@@ -149,6 +149,11 @@ public class ExperimentRL {
         System.out.println("Average reward: " + rlController.getAverageReward());
       }
 
+      double currentExplorationRate = rlController.getExplorationRate();
+      double currentLearningRate = rlController.getLearningRate();
+      rlController.setExplorationRate(0.0);
+      rlController.setLearningRate(0.0);
+
       // Test episodes
       for (int j = 0; j < 1; j++) {
         System.out.println("Testing episode " + (j + 1) + "/2");
@@ -166,6 +171,9 @@ public class ExperimentRL {
         );
         System.out.println("Average reward: " + rlController.getAverageReward());
       }
+
+      rlController.setExplorationRate(currentExplorationRate);
+      rlController.setLearningRate(currentLearningRate);
     }
   }
 
