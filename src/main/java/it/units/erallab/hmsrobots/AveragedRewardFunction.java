@@ -2,6 +2,7 @@ package it.units.erallab.hmsrobots;
 
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
+import it.units.erallab.hmsrobots.core.sensors.CompositeSensor;
 import it.units.erallab.hmsrobots.util.Grid;
 
 import java.util.ArrayList;
@@ -31,8 +32,12 @@ class AveragedRewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettabl
     double currentReward = 0.0;
     for (ArrayList<Grid.Key> cluster : clusters) {
       for (Grid.Key key : cluster) {
-        currentReward += voxels.get(key.x(), key.y()).getSensors().get(1).getReadings()[0];
-        ++counter;
+        // TODO : Improve this
+        if (voxels.get(key.x(), key.y()).getSensors().get(1) instanceof CompositeSensor) {
+          currentReward += ((CompositeSensor) voxels.get(key.x(), key.y()).getSensors().get(1)).getSensor()
+              .getReadings()[0];
+          ++counter;
+        }
       }
     }
     currentReward = currentReward / counter;
@@ -44,6 +49,8 @@ class AveragedRewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettabl
     for (double reward : rewards) {
       totalReward += reward;
     }
+
+    System.out.println(totalReward);
 
     return totalReward;
   }
