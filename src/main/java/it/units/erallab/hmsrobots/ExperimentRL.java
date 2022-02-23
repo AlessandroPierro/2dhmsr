@@ -25,7 +25,7 @@ import java.util.function.ToDoubleFunction;
 import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
 
 public class ExperimentRL {
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     // Settings
     double learningRate = 0.1;
     double explorationRate = 0.8;
@@ -86,7 +86,7 @@ public class ExperimentRL {
 
     // Create output converter
     DiscreteRL.OutputConverter outputConverter;
-    outputConverter = new BinaryOutputConverter(outputDimension, clustersList, 0.45);
+    outputConverter = new BinaryOutputConverter(outputDimension, clustersList, 0.55);
 
     // Create Random
     Random random = new Random(50);
@@ -109,21 +109,17 @@ public class ExperimentRL {
         (int) Math.pow(2, 4)
     );
 
-    // String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.GZIPPED_JSON);
-    // System.out.println(rlString);
-    // rlAgentDiscrete = SerializationUtils.deserialize(rlString, TabularExpectedSARSAAgent.class, SerializationUtils.Mode.GZIPPED_JSON);
-
     // Create continuous agent from discrete one
     ContinuousRL rlAgent = rlAgentDiscrete.with(binaryInputConverter, outputConverter);
 
     // Create the reward function
     ToDoubleFunction<Grid<Voxel>> rewardFunction;
-    rewardFunction = new AveragedRewardFunction(clustersList, 10);
+    rewardFunction = new AveragedRewardFunction(clustersList, 5);
 
     // Create the RL controller and apply it to the body
     RLController rlController;
     rlController = new RLController(rewardFunction, observationFunction, rlAgent, clustersList);
-    StepController stepController = new StepController(rlController, 0.5);
+    StepController stepController = new StepController(rlController, 0.3);
     Robot robot = new Robot(stepController, SerializationUtils.clone(body));
 
     Locomotion locomotion;
@@ -173,17 +169,18 @@ public class ExperimentRL {
 
       rlAgentDiscrete.setExplorationRate(currentExplorationRate);
       rlAgentDiscrete.setLearningRate(currentLearningRate);
+
+      // Serialize agent
+      String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.JSON);
+
+      try {
+        FileWriter file = new FileWriter(args[3] + "rlagent-"+epochs+".json");
+        file.write(rlString);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
 
-    // Serialize agent
-    String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.JSON);
-    // save to file
-    try {
-      FileWriter file = new FileWriter(args[3] + "rlagent.json");
-      file.write(rlString);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
   }
 
 }
