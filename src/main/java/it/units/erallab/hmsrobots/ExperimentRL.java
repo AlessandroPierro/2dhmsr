@@ -135,11 +135,12 @@ public class ExperimentRL {
 
     Locomotion locomotion;
 
+    System.out.println("Epoch,Episode,Kind,AverageReward,MinReward,MaxReward");
+
     // Training episodes
-    for (int i = 0; i < epochs; ++i) {
-      for (int j = 0; j < trainEpisodes; j++) {
-        System.out.println("Training episode " + (j + 1) + "/" + trainEpisodes + " on epoch " + (i + 1) + "/" + epochs);
-        locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
+    for (int i = 1; i <= epochs; ++i) {
+      for (int j = 1; j <= trainEpisodes; j++) {
+        locomotion = new Locomotion(5, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
             Grid.create(1, 1, new NamedValue<>(robotShape + " - ExpectedSARSA (train)", robot)),
@@ -151,7 +152,12 @@ public class ExperimentRL {
             new File(path + "expectedSARSA_" + robotShape + "_" + i + "-" + j + ".mp4"),
             Drawers::basicWithMiniWorld
         );
-        System.out.println("Average reward: " + rlController.getAverageReward());
+
+        double averageReward = rlController.getAverageReward();
+        double minReward = rlController.getMinReward();
+        double maxReward = rlController.getMaxReward();
+
+        System.out.println(i+","+j+","+"train"+","+averageReward+","+minReward+","+maxReward);
       }
 
       double currentExplorationRate = rlAgentDiscrete.getExplorationRate();
@@ -161,9 +167,8 @@ public class ExperimentRL {
       rlAgentDiscrete.setLearningRate(0);
 
       // Test episodes
-      for (int j = 0; j < testEpisodes; j++) {
-        System.out.println("Testing episode " + (j + 1) + "/" + testEpisodes + " on epoch " + (i + 1) + "/" + epochs);
-        locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
+      for (int j = 1; j <= testEpisodes; j++) {
+        locomotion = new Locomotion(5, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
             Grid.create(1, 1, new NamedValue<>(robotShape + " - ExpectedSARSA (train)", robot)),
@@ -175,7 +180,12 @@ public class ExperimentRL {
             new File(path + "test_expectedSARSA_" + robotShape + "_" + i + "-" + j + ".mp4"),
             Drawers::basicWithMiniWorldAndRL
         );
-        System.out.println("Average reward: " + rlController.getAverageReward());
+
+        double averageReward = rlController.getAverageReward();
+        double minReward = rlController.getMinReward();
+        double maxReward = rlController.getMaxReward();
+
+        System.out.println(i+","+j+","+"test"+","+averageReward+","+minReward+","+maxReward);
       }
 
       rlAgentDiscrete.setExplorationRate(currentExplorationRate);

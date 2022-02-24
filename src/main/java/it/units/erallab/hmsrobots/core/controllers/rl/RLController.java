@@ -26,8 +26,10 @@ public class RLController extends AbstractController implements Snapshottable {
   private double reward;
   private double[] action;
 
-  private double totalReward = 0.0;
   private int totalSteps = 0;
+  private double maxReward = Double.NEGATIVE_INFINITY;
+  private double minReward = Double.POSITIVE_INFINITY;
+  private double totalReward = 0.0;
 
   public RLController(
       ToDoubleFunction<Grid<Voxel>> rewardFunction,
@@ -60,6 +62,8 @@ public class RLController extends AbstractController implements Snapshottable {
 
     reward = rewardFunction.applyAsDouble(voxels);
     totalReward += reward;
+    maxReward = Math.max(reward, maxReward);
+    minReward = Math.min(reward, minReward);
     totalSteps += 1;
 
     action = rl.apply(t, observation, reward);
@@ -81,6 +85,18 @@ public class RLController extends AbstractController implements Snapshottable {
     return output;
   }
 
+  public double getAverageReward() {
+    return (totalSteps == 0 ? 0.0 : totalReward / totalSteps);
+  }
+
+  public double getMaxReward() {
+    return maxReward;
+  }
+
+  public double getMinReward() {
+    return minReward;
+  }
+
   @Override
   public Snapshot getSnapshot() {
     Snapshot snapshot = new Snapshot(
@@ -96,13 +112,11 @@ public class RLController extends AbstractController implements Snapshottable {
     rl.reset();
     totalReward = 0.0;
     totalSteps = 0;
+    maxReward = Double.NEGATIVE_INFINITY;
+    minReward = Double.POSITIVE_INFINITY;
     if (rewardFunction instanceof Resettable r) {
       r.reset();
     }
-  }
-
-  public double getAverageReward() {
-    return (totalSteps == 0 ? 0.0 : totalReward / totalSteps);
   }
 
 }
