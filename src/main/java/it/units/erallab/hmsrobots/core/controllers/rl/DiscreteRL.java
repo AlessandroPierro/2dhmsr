@@ -20,14 +20,6 @@ public interface DiscreteRL extends IOSized, Snapshottable, Resettable {
     DiscreteRL inner = this;
     return new ContinuousRL() {
       @Override
-      public void reset() { }
-
-      @Override
-      public Snapshot getSnapshot() {
-        return inner.getSnapshot();
-      }
-
-      @Override
       public double[] apply(double t, double[] state, double reward) {
         return outputConverter.apply(inner.apply(t, inputConverter.apply(state), reward));
       }
@@ -40,6 +32,16 @@ public interface DiscreteRL extends IOSized, Snapshottable, Resettable {
       @Override
       public int getOutputDimension() {
         return outputConverter.getOutputDimension();
+      }
+
+      @Override
+      public Snapshot getSnapshot() {
+        return inner.getSnapshot();
+      }
+
+      @Override
+      public void reset() {
+        inner.reset();
       }
     };
   }
