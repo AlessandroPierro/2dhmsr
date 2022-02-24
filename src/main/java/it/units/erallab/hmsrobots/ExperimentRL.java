@@ -1,12 +1,14 @@
 package it.units.erallab.hmsrobots;
 
 import it.units.erallab.hmsrobots.core.controllers.StepController;
-import it.units.erallab.hmsrobots.core.controllers.rl.*;
+import it.units.erallab.hmsrobots.core.controllers.rl.ContinuousRL;
+import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
+import it.units.erallab.hmsrobots.core.controllers.rl.RLController;
+import it.units.erallab.hmsrobots.core.controllers.rl.TabularExpectedSARSAAgent;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.AreaRatio;
 import it.units.erallab.hmsrobots.core.sensors.Sensor;
-import it.units.erallab.hmsrobots.core.sensors.Touch;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
@@ -38,15 +40,17 @@ public class ExperimentRL {
     int testEpisodes = Integer.parseInt(args[4]);
     String path = args[5];
 
+    String name = "QLearning";
+
     // Settings
     double learningRate = 0.1;
-    double explorationRate = 0.8;
-    double learningRateDecay = 0.995;
-    double explorationRateDecay = 0.995;
-    double discountFactor = 0.85;
+    double explorationRate = 0.85;
+    double learningRateDecay = 0.95;
+    double explorationRateDecay = 0.99;
+    double discountFactor = 0.98;
 
     // Create the robot
-    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+t+vxy-0")
+    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy-0")
         .apply(RobotUtils.buildShape(robotShape));
     Grid<Boolean> shape = Grid.create(body, Objects::nonNull);
 
@@ -54,7 +58,6 @@ public class ExperimentRL {
     // TODO Check for better usage
     Set<Class<? extends Sensor>> usedSensors = new HashSet<>();
     usedSensors.add(AreaRatio.class);
-    usedSensors.add(Touch.class);
 
     // Split the robot in 4 cardinal clusters
     Set<Set<Grid.Key>> clusters = computeCardinalPoses(shape);
@@ -146,13 +149,13 @@ public class ExperimentRL {
         locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
-            Grid.create(1, 1, new NamedValue<>(robotShape + " - QLearning (train)", robot)),
+            Grid.create(1, 1, new NamedValue<>(robotShape + " - " + name + " (train)", robot)),
             512,
             256,
             0,
             15,
             VideoUtils.EncoderFacility.JCODEC,
-            new File(path + "QLearning_" + robotShape + "_" + i + "-" + j + ".mp4"),
+            new File(path + name + "_" + robotShape + "_" + i + "-" + j + ".mp4"),
             Drawers::basicWithMiniWorld
         );
 
@@ -174,13 +177,13 @@ public class ExperimentRL {
         locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
-            Grid.create(1, 1, new NamedValue<>(robotShape + " - QLearning (test)", robot)),
+            Grid.create(1, 1, new NamedValue<>(robotShape + " - " + name + " (test)", robot)),
             640,
             320,
             0,
             20,
             VideoUtils.EncoderFacility.JCODEC,
-            new File(path + "test_QLearning_" + robotShape + "_" + i + "-" + j + ".mp4"),
+            new File(path + "test_" + name + "_" + robotShape + "_" + i + "-" + j + ".mp4"),
             Drawers::basicWithMiniWorldAndRL
         );
 
@@ -196,7 +199,7 @@ public class ExperimentRL {
 
       String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.JSON);
       try {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(path + "QLearning_" + robotShape + "_" + i + ".json"));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(path + name + "_" + robotShape + "_" + i + ".json"));
         writer.write(rlString);
         writer.close();
       } catch (IOException e) {
