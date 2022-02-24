@@ -94,6 +94,8 @@ public class RLController extends AbstractController implements Snapshottable {
   @Override
   public void reset() {
     rl.reset();
+    totalReward = 0.0;
+    totalSteps = 0;
     if (rewardFunction instanceof Resettable r) {
       r.reset();
     }
