@@ -19,6 +19,7 @@ import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
 import org.dyn4j.dynamics.Settings;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -168,7 +169,7 @@ public class ExperimentRL {
 
       // Test episodes
       for (int j = 1; j <= testEpisodes; j++) {
-        locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
+        locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
             Grid.create(1, 1, new NamedValue<>(robotShape + " - ExpectedSARSA (train)", robot)),
@@ -191,11 +192,11 @@ public class ExperimentRL {
       rlAgentDiscrete.setExplorationRate(currentExplorationRate);
       rlAgentDiscrete.setLearningRate(currentLearningRate);
 
-      // TODO : Fix agent saving
       String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.JSON);
       try {
-        FileWriter file = new FileWriter(path + "rlagent-" + i + ".json");
-        file.write(rlString);
+        BufferedWriter writer = new BufferedWriter(new FileWriter(path + "expectedSARSA_" + robotShape + "_" + i + ".json"));
+        writer.write(rlString);
+        writer.close();
       } catch (IOException e) {
         e.printStackTrace();
       }
