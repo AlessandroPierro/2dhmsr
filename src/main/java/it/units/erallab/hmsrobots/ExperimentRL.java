@@ -43,8 +43,8 @@ public class ExperimentRL {
     // Settings
     double learningRate = 0.1;
     double explorationRate = 0.8;
-    double learningRateDecay = 0.99;
-    double explorationRateDecay = 0.99;
+    double learningRateDecay = 0.995;
+    double explorationRateDecay = 0.995;
     double discountFactor = 0.85;
 
     // Create the robot
