@@ -4,7 +4,7 @@ import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.rl.ContinuousRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.RLController;
-import it.units.erallab.hmsrobots.core.controllers.rl.TabularExpectedSARSAAgent;
+import it.units.erallab.hmsrobots.core.controllers.rl.TabularQLearningAgent;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.AreaRatio;
@@ -45,7 +45,7 @@ public class ExperimentRL {
     double explorationRate = 0.8;
     double learningRateDecay = 0.99;
     double explorationRateDecay = 0.99;
-    double discountFactor = 0.5;
+    double discountFactor = 0.85;
 
     // Create the robot
     Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy-0")
@@ -109,7 +109,7 @@ public class ExperimentRL {
     Supplier<Double> qtableInitializer = () -> averageQ + stdQ * random.nextGaussian();
 
     // Instantiate Tabular Q-Learning agent
-    TabularExpectedSARSAAgent rlAgentDiscrete = new TabularExpectedSARSAAgent(
+    TabularQLearningAgent rlAgentDiscrete = new TabularQLearningAgent(
         learningRate,
         explorationRate,
         learningRateDecay,
@@ -136,21 +136,24 @@ public class ExperimentRL {
 
     Locomotion locomotion;
 
-    System.out.println("Epoch,Episode,Kind,AverageReward,MinReward,MaxReward");
+    double currentExplorationRate = explorationRate;
+    double currentLearningRate = learningRate;
 
-    // Training episodes
+    System.out.println("Epoch,Episode,Kind,AverageReward,MinReward,MaxReward,ExplorationRate,LearningRate");
+
     for (int i = 1; i <= epochs; ++i) {
+      // Training episodes
       for (int j = 1; j <= trainEpisodes; j++) {
         locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
-            Grid.create(1, 1, new NamedValue<>(robotShape + " - ExpectedSARSA (train)", robot)),
+            Grid.create(1, 1, new NamedValue<>(robotShape + " - QLearning (train)", robot)),
             512,
             256,
             0,
             15,
             VideoUtils.EncoderFacility.JCODEC,
-            new File(path + "expectedSARSA_" + robotShape + "_" + i + "-" + j + ".mp4"),
+            new File(path + "QLearning_" + robotShape + "_" + i + "-" + j + ".mp4"),
             Drawers::basicWithMiniWorld
         );
 
@@ -158,27 +161,27 @@ public class ExperimentRL {
         double minReward = rlController.getMinReward();
         double maxReward = rlController.getMaxReward();
 
-        System.out.println(i+","+j+","+"train"+","+averageReward+","+minReward+","+maxReward);
-      }
+        currentExplorationRate = rlAgentDiscrete.getExplorationRate();
+        currentLearningRate = rlAgentDiscrete.getLearningRate();
 
-      double currentExplorationRate = rlAgentDiscrete.getExplorationRate();
-      double currentLearningRate = rlAgentDiscrete.getLearningRate();
+        System.out.println(i + "," + j + "," + "train" + "," + averageReward + "," + minReward + "," + maxReward + "," + currentExplorationRate + "," + currentLearningRate);
+      }
 
       rlAgentDiscrete.setExplorationRate(0);
       rlAgentDiscrete.setLearningRate(0);
 
-      // Test episodes
+      // Test episodes (no exploration)
       for (int j = 1; j <= testEpisodes; j++) {
         locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
-            Grid.create(1, 1, new NamedValue<>(robotShape + " - ExpectedSARSA (train)", robot)),
+            Grid.create(1, 1, new NamedValue<>(robotShape + " - QLearning (test)", robot)),
             640,
             320,
             0,
             20,
             VideoUtils.EncoderFacility.JCODEC,
-            new File(path + "test_expectedSARSA_" + robotShape + "_" + i + "-" + j + ".mp4"),
+            new File(path + "test_QLearning_" + robotShape + "_" + i + "-" + j + ".mp4"),
             Drawers::basicWithMiniWorldAndRL
         );
 
@@ -186,7 +189,7 @@ public class ExperimentRL {
         double minReward = rlController.getMinReward();
         double maxReward = rlController.getMaxReward();
 
-        System.out.println(i+","+j+","+"test"+","+averageReward+","+minReward+","+maxReward);
+        System.out.println(i + "," + j + "," + "test" + "," + averageReward + "," + minReward + "," + maxReward + ",0,0");
       }
 
       rlAgentDiscrete.setExplorationRate(currentExplorationRate);
@@ -194,7 +197,7 @@ public class ExperimentRL {
 
       String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.JSON);
       try {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(path + "expectedSARSA_" + robotShape + "_" + i + ".json"));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(path + "QLearning_" + robotShape + "_" + i + ".json"));
         writer.write(rlString);
         writer.close();
       } catch (IOException e) {
