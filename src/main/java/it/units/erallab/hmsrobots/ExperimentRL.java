@@ -1,14 +1,12 @@
 package it.units.erallab.hmsrobots;
 
 import it.units.erallab.hmsrobots.core.controllers.StepController;
-import it.units.erallab.hmsrobots.core.controllers.rl.ContinuousRL;
-import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
-import it.units.erallab.hmsrobots.core.controllers.rl.RLController;
-import it.units.erallab.hmsrobots.core.controllers.rl.TabularQLearningAgent;
+import it.units.erallab.hmsrobots.core.controllers.rl.*;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.AreaRatio;
 import it.units.erallab.hmsrobots.core.sensors.Sensor;
+import it.units.erallab.hmsrobots.core.sensors.Touch;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
@@ -48,7 +46,7 @@ public class ExperimentRL {
     double discountFactor = 0.85;
 
     // Create the robot
-    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy-0")
+    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+t+vxy-0")
         .apply(RobotUtils.buildShape(robotShape));
     Grid<Boolean> shape = Grid.create(body, Objects::nonNull);
 
@@ -56,6 +54,7 @@ public class ExperimentRL {
     // TODO Check for better usage
     Set<Class<? extends Sensor>> usedSensors = new HashSet<>();
     usedSensors.add(AreaRatio.class);
+    usedSensors.add(Touch.class);
 
     // Split the robot in 4 cardinal clusters
     Set<Set<Grid.Key>> clusters = computeCardinalPoses(shape);
@@ -109,7 +108,7 @@ public class ExperimentRL {
     Supplier<Double> qtableInitializer = () -> averageQ + stdQ * random.nextGaussian();
 
     // Instantiate Tabular Q-Learning agent
-    TabularQLearningAgent rlAgentDiscrete = new TabularQLearningAgent(
+    TabularExpectedSARSAAgent rlAgentDiscrete = new TabularExpectedSARSAAgent(
         learningRate,
         explorationRate,
         learningRateDecay,
@@ -167,10 +166,10 @@ public class ExperimentRL {
         System.out.println(i + "," + j + "," + "train" + "," + averageReward + "," + minReward + "," + maxReward + "," + currentExplorationRate + "," + currentLearningRate);
       }
 
-      rlAgentDiscrete.setExplorationRate(0);
+      rlAgentDiscrete.setExplorationRate(0.05);
       rlAgentDiscrete.setLearningRate(0);
 
-      // Test episodes (no exploration)
+      // Test episodes (little/no exploration)
       for (int j = 1; j <= testEpisodes; j++) {
         locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
