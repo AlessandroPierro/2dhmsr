@@ -140,7 +140,7 @@ public class ExperimentRL {
     // Training episodes
     for (int i = 1; i <= epochs; ++i) {
       for (int j = 1; j <= trainEpisodes; j++) {
-        locomotion = new Locomotion(5, Locomotion.createTerrain("flat"), new Settings());
+        locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
             Grid.create(1, 1, new NamedValue<>(robotShape + " - ExpectedSARSA (train)", robot)),
@@ -168,7 +168,7 @@ public class ExperimentRL {
 
       // Test episodes
       for (int j = 1; j <= testEpisodes; j++) {
-        locomotion = new Locomotion(5, Locomotion.createTerrain("flat"), new Settings());
+        locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
             Grid.create(1, 1, new NamedValue<>(robotShape + " - ExpectedSARSA (train)", robot)),
@@ -194,7 +194,7 @@ public class ExperimentRL {
       // TODO : Fix agent saving
       String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.JSON);
       try {
-        FileWriter file = new FileWriter(path + "rlagent-" + epochs + ".json");
+        FileWriter file = new FileWriter(path + "rlagent-" + i + ".json");
         file.write(rlString);
       } catch (IOException e) {
         e.printStackTrace();
