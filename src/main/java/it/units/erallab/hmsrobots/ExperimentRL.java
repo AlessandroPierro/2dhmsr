@@ -30,6 +30,15 @@ import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses
 
 public class ExperimentRL {
   public static void main(String[] args) {
+    // Command line arguments
+    String robotShape = args[0];
+    // TODO : Automate outputDimension counting
+    int outputDimension = Integer.parseInt(args[1]);
+    int epochs = Integer.parseInt(args[2]);
+    int trainEpisodes = Integer.parseInt(args[3]);
+    int testEpisodes = Integer.parseInt(args[4]);
+    String path = args[5];
+
     // Settings
     double learningRate = 0.1;
     double explorationRate = 0.8;
@@ -37,12 +46,9 @@ public class ExperimentRL {
     double explorationRateDecay = 0.99;
     double discountFactor = 0.5;
 
-    int outputDimension = Integer.parseInt(args[1]);
-    int episodes = Integer.parseInt(args[2]);
-
     // Create the robot
     Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy-0")
-        .apply(RobotUtils.buildShape(args[0]));
+        .apply(RobotUtils.buildShape(robotShape));
     Grid<Boolean> shape = Grid.create(body, Objects::nonNull);
 
     // Create the list of sensors to be used by RL
@@ -130,19 +136,19 @@ public class ExperimentRL {
     Locomotion locomotion;
 
     // Training episodes
-    for (int epochs = 0; epochs < 50; epochs++) {
-      for (int j = 0; j < episodes; j++) {
-        System.out.println("Training episode " + (j + 1) + "/" + episodes + " on epoch " + (epochs + 1) + "/50");
+    for (int i = 0; i < epochs; ++i) {
+      for (int j = 0; j < trainEpisodes; j++) {
+        System.out.println("Training episode " + (j + 1) + "/" + trainEpisodes + " on epoch " + (i + 1) + "/" + epochs);
         locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
-            Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
-            600,
-            400,
+            Grid.create(1, 1, new NamedValue<>(robotShape + " - ExpectedSARSA (train)", robot)),
+            512,
+            256,
             0,
-            20,
+            15,
             VideoUtils.EncoderFacility.JCODEC,
-            new File(args[3] + "expectedSARSA_" + args[0] + "_" + epochs + "-" + j + ".mp4"),
+            new File(path + "expectedSARSA_" + robotShape + "_" + i + "-" + j + ".mp4"),
             Drawers::basicWithMiniWorld
         );
         System.out.println("Average reward: " + rlController.getAverageReward());
@@ -155,18 +161,18 @@ public class ExperimentRL {
       rlAgentDiscrete.setLearningRate(0);
 
       // Test episodes
-      for (int j = 0; j < 1; j++) {
-        System.out.println("Testing episode " + (j + 1) + "/2");
+      for (int j = 0; j < testEpisodes; j++) {
+        System.out.println("Testing episode " + (j + 1) + "/" + testEpisodes + " on epoch " + (i + 1) + "/" + epochs);
         locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
-            Grid.create(1, 1, new NamedValue<>("phasesRobot", robot)),
-            660,
-            460,
+            Grid.create(1, 1, new NamedValue<>(robotShape + " - ExpectedSARSA (train)", robot)),
+            640,
+            320,
             0,
             20,
             VideoUtils.EncoderFacility.JCODEC,
-            new File(args[3] + "test_expectedSARSA_" + args[0] + "_" + epochs + "-" + j + ".mp4"),
+            new File(path + "test_expectedSARSA_" + robotShape + "_" + i + "-" + j + ".mp4"),
             Drawers::basicWithMiniWorldAndRL
         );
         System.out.println("Average reward: " + rlController.getAverageReward());
@@ -175,11 +181,10 @@ public class ExperimentRL {
       rlAgentDiscrete.setExplorationRate(currentExplorationRate);
       rlAgentDiscrete.setLearningRate(currentLearningRate);
 
-      // Serialize agent
+      // TODO : Fix agent saving
       String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.JSON);
-
       try {
-        FileWriter file = new FileWriter(args[3] + "rlagent-" + epochs + ".json");
+        FileWriter file = new FileWriter(path + "rlagent-" + epochs + ".json");
         file.write(rlString);
       } catch (IOException e) {
         e.printStackTrace();
