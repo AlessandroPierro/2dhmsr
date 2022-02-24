@@ -41,6 +41,7 @@ class AveragedRewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettabl
       }
     }
     currentReward = currentReward / counter;
+    currentReward = currentReward > 0 ? rewards.length * currentReward : currentReward;
 
     rewards[step] = currentReward / rewards.length;
     step = (step + 1) % rewards.length;

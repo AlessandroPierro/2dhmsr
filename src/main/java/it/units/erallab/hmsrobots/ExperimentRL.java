@@ -1,7 +1,10 @@
 package it.units.erallab.hmsrobots;
 
 import it.units.erallab.hmsrobots.core.controllers.StepController;
-import it.units.erallab.hmsrobots.core.controllers.rl.*;
+import it.units.erallab.hmsrobots.core.controllers.rl.ContinuousRL;
+import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
+import it.units.erallab.hmsrobots.core.controllers.rl.RLController;
+import it.units.erallab.hmsrobots.core.controllers.rl.TabularExpectedSARSAAgent;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.AreaRatio;
@@ -11,13 +14,15 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 import it.units.erallab.hmsrobots.viewers.GridFileWriter;
+import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
 import it.units.erallab.hmsrobots.viewers.NamedValue;
 import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
-import org.apache.commons.math3.analysis.function.Abs;
 import org.dyn4j.dynamics.Settings;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
@@ -58,7 +63,11 @@ public class ExperimentRL {
     }
 
     // Create the observation function
-    ClusteredObservationFunction observationFunction = new ClusteredObservationFunction(body, usedSensors, clustersList);
+    ClusteredObservationFunction observationFunction = new ClusteredObservationFunction(
+        body,
+        usedSensors,
+        clustersList
+    );
 
     // Create input converter
     // TODO Get lower/upper bounds from observation function based on sensors domains
@@ -82,11 +91,11 @@ public class ExperimentRL {
     //);
 
     // Create binary input converter
-    DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(inputDimension, 0.5);
+    DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(inputDimension, 0.45);
 
     // Create output converter
     DiscreteRL.OutputConverter outputConverter;
-    outputConverter = new BinaryOutputConverter(outputDimension, clustersList, 0.55);
+    outputConverter = new BinaryOutputConverter(outputDimension, clustersList, 0.5);
 
     // Create Random
     Random random = new Random(50);
@@ -119,7 +128,7 @@ public class ExperimentRL {
     // Create the RL controller and apply it to the body
     RLController rlController;
     rlController = new RLController(rewardFunction, observationFunction, rlAgent, clustersList);
-    StepController stepController = new StepController(rlController, 0.3);
+    StepController stepController = new StepController(rlController, 0.45);
     Robot robot = new Robot(stepController, SerializationUtils.clone(body));
 
     Locomotion locomotion;
@@ -127,7 +136,7 @@ public class ExperimentRL {
     // Training episodes
     for (int epochs = 0; epochs < 50; epochs++) {
       for (int j = 0; j < episodes; j++) {
-        System.out.println("Training episode " + (j + 1) + "/" + episodes + " on epoch " + (epochs + 1) + "/500");
+        System.out.println("Training episode " + (j + 1) + "/" + episodes + " on epoch " + (epochs + 1) + "/50");
         locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
         GridFileWriter.save(
             locomotion,
@@ -137,7 +146,7 @@ public class ExperimentRL {
             0,
             20,
             VideoUtils.EncoderFacility.JCODEC,
-            new File(args[3] + "expectedSARSA_" + args[0] + "_"  + epochs + "-" + j + ".mp4"),
+            new File(args[3] + "expectedSARSA_" + args[0] + "_" + epochs + "-" + j + ".mp4"),
             Drawers::basicWithMiniWorld
         );
         System.out.println("Average reward: " + rlController.getAverageReward());
@@ -174,13 +183,11 @@ public class ExperimentRL {
       String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.JSON);
 
       try {
-        FileWriter file = new FileWriter(args[3] + "rlagent-"+epochs+".json");
+        FileWriter file = new FileWriter(args[3] + "rlagent-" + epochs + ".json");
         file.write(rlString);
       } catch (IOException e) {
         e.printStackTrace();
       }
     }
-
   }
-
 }
