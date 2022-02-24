@@ -8,7 +8,7 @@ import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import it.units.erallab.hmsrobots.util.Grid;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.ToDoubleFunction;
@@ -18,7 +18,7 @@ public class RLController extends AbstractController implements Snapshottable {
   private final ToDoubleFunction<Grid<Voxel>> rewardFunction;
   private final BiFunction<Double, Grid<Voxel>, double[]> observationFunction;
   private final ContinuousRL rl;
-  private final ArrayList<ArrayList<Grid.Key>> clusters;
+  private final List<List<Grid.Key>> clusters;
   private Grid<Double> output;
   private boolean initialized = false;
 
@@ -33,7 +33,7 @@ public class RLController extends AbstractController implements Snapshottable {
       ToDoubleFunction<Grid<Voxel>> rewardFunction,
       BiFunction<Double, Grid<Voxel>, double[]> observationFunction,
       ContinuousRL rl,
-      ArrayList<ArrayList<Grid.Key>> clusters
+      List<List<Grid.Key>> clusters
   ) {
     this.rewardFunction = rewardFunction;
     this.observationFunction = observationFunction;
@@ -72,7 +72,7 @@ public class RLController extends AbstractController implements Snapshottable {
       ));
     }
     int c = 0;
-    for (ArrayList<Grid.Key> cluster : clusters) {
+    for (List<Grid.Key> cluster : clusters) {
       for (Grid.Key key : cluster) {
         output.set(key.x(), key.y(), action[c]);
         c++;
@@ -96,32 +96,6 @@ public class RLController extends AbstractController implements Snapshottable {
     rl.reset();
     if (rewardFunction instanceof Resettable r) {
       r.reset();
-    }
-  }
-
-  public double getExplorationRate() {
-    if (rl instanceof AbstractQTableAgent a) {
-      return a.getExplorationRate();
-    }
-    return 0;
-  }
-
-  public void setExplorationRate(double e) {
-    if (rl instanceof AbstractQTableAgent a) {
-      a.setExplorationRate(e);
-    }
-  }
-
-  public double getLearningRate() {
-    if (rl instanceof AbstractQTableAgent a) {
-      return a.getLearningRate();
-    }
-    return 0;
-  }
-
-  public void setLearningRate(double l) {
-    if (rl instanceof AbstractQTableAgent a) {
-      a.setLearningRate(l);
     }
   }
 

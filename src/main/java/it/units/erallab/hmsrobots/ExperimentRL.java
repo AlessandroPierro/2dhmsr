@@ -14,7 +14,6 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 import it.units.erallab.hmsrobots.viewers.GridFileWriter;
-import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
 import it.units.erallab.hmsrobots.viewers.NamedValue;
 import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
@@ -54,12 +53,9 @@ public class ExperimentRL {
     // Split the robot in 4 cardinal clusters
     Set<Set<Grid.Key>> clusters = computeCardinalPoses(shape);
 
-    ArrayList<ArrayList<Grid.Key>> clustersList = new ArrayList<>();
-    int i = 0;
+    List<List<Grid.Key>> clustersList = new ArrayList<>();
     for (Set<Grid.Key> cluster : clusters) {
-      clustersList.add(new ArrayList<>());
-      clustersList.get(i).addAll(cluster);
-      i++;
+      clustersList.add(new ArrayList<>(cluster));
     }
 
     // Create the observation function

@@ -7,13 +7,14 @@ import it.units.erallab.hmsrobots.util.Grid;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 
 class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, double[]> {
 
   private final Set<Class<? extends Sensor>> usedSensors;
-  private final ArrayList<ArrayList<Grid.Key>> clusters;
+  private final List<List<Grid.Key>> clusters;
   private final int numberClusters;
   private final int[] clustersDimensions;
   private final int sensorsDimension;
@@ -22,7 +23,7 @@ class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, do
   ClusteredObservationFunction(
       Grid<Voxel> body,
       Set<Class<? extends Sensor>> usedSensors,
-      ArrayList<ArrayList<Grid.Key>> clusters
+      List<List<Grid.Key>> clusters
   ) {
     this.usedSensors = usedSensors;
     this.clusters = clusters;

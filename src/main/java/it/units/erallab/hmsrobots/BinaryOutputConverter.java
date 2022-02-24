@@ -3,7 +3,7 @@ package it.units.erallab.hmsrobots;
 import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
 import it.units.erallab.hmsrobots.util.Grid;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
 import static java.lang.Math.abs;
@@ -14,12 +14,12 @@ class BinaryOutputConverter implements DiscreteRL.OutputConverter {
 
   private final double force;
 
-  private final ArrayList<ArrayList<Grid.Key>> clusters;
+  private final List<List<Grid.Key>> clusters;
 
 
   BinaryOutputConverter(
       int outputDimension,
-      ArrayList<ArrayList<Grid.Key>> clusters,
+      List<List<Grid.Key>> clusters,
       double force
   ) {
     this.outputDimension = outputDimension;
@@ -31,7 +31,7 @@ class BinaryOutputConverter implements DiscreteRL.OutputConverter {
 
   BinaryOutputConverter(
       int outputDimension,
-      ArrayList<ArrayList<Grid.Key>> clusters
+      List<List<Grid.Key>> clusters
   ) {
     this(outputDimension, clusters, 1.0);
   }
