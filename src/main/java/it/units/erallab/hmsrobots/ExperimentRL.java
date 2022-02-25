@@ -45,9 +45,9 @@ public class ExperimentRL {
     // Settings
     double learningRate = 0.1;
     double explorationRate = 0.85;
-    double learningRateDecay = 0.95;
-    double explorationRateDecay = 0.99;
-    double discountFactor = 0.98;
+    double learningRateDecay = 0.995;
+    double explorationRateDecay = 0.995;
+    double discountFactor = 0.99;
 
     // Create the robot
     Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy-0")
@@ -133,7 +133,7 @@ public class ExperimentRL {
     // Create the RL controller and apply it to the body
     RLController rlController;
     rlController = new RLController(rewardFunction, observationFunction, rlAgent, clustersList);
-    StepController stepController = new StepController(rlController, 0.45);
+    StepController stepController = new StepController(rlController, 0.4);
     Robot robot = new Robot(stepController, SerializationUtils.clone(body));
 
     Locomotion locomotion;
