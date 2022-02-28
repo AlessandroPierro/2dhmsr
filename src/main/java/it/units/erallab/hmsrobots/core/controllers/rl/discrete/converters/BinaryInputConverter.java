@@ -7,21 +7,21 @@ import java.util.function.Function;
 public class BinaryInputConverter implements DiscreteRL.InputConverter {
 
   private final int inputDimension;
-  private final double cutoff;
+  private final double[] splitValues;
 
   public BinaryInputConverter(
       int inputDimension,
-      double cutoff
+      double[] splitValues
   ) {
     this.inputDimension = inputDimension;
-    this.cutoff = cutoff;
+    this.splitValues = splitValues;
   }
 
   @Override
   public Integer apply(double[] doubles) {
     StringBuilder result = new StringBuilder();
-    for (double d : doubles) {
-      result.append(d > cutoff ? "1" : "0");
+    for (int i = 0; i < inputDimension; i++) {
+      result.append(doubles[i] > splitValues[i] ? "1" : "0");
     }
     return Integer.parseInt(result.toString(), 2);
   }

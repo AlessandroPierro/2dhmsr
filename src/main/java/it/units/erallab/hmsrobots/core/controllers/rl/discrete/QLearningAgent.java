@@ -5,8 +5,6 @@ import java.util.function.Supplier;
 public class QLearningAgent extends AbstractQTableAgent {
 
   public QLearningAgent(
-      double learningRate,
-      double explorationRate,
       double learningRateDecay,
       double explorationRateDecay,
       double discountFactor,
@@ -16,8 +14,6 @@ public class QLearningAgent extends AbstractQTableAgent {
       int actionSpaceDimension
   ) {
     super(
-        learningRate,
-        explorationRate,
         learningRateDecay,
         explorationRateDecay,
         discountFactor,
@@ -32,6 +28,6 @@ public class QLearningAgent extends AbstractQTableAgent {
   protected void updateQTable(int previousState, int action, double reward, int newState, double[][] qTable) {
     double q = qTable[previousState][action];
     double maxQ = getMaxQ(newState, qTable);
-    qTable[previousState][action] = q + learningRate * (reward + discountFactor * maxQ - q);
+    qTable[previousState][action] = q + learningRates[previousState] * (reward + discountFactor * maxQ - q);
   }
 }

@@ -17,7 +17,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   protected final int actionSpaceDimension;
 
   @JsonProperty
-  protected final double[][] qTableA;
+  protected double[][] qTableA;
   @JsonProperty
   protected final double learningRateDecay;
   @JsonProperty
@@ -27,17 +27,15 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   protected final RandomGenerator random;
   @JsonProperty
   private final int seed;
-  @JsonProperty
-  protected double learningRate;
-  @JsonProperty
-  protected double explorationRate;
   protected boolean initialized = false;
   protected int previousState;
   protected int action;
 
+  protected double[] learningRates;
+  protected double[] explorationRates;
+  protected int[] visitsNumber;
+
   public AbstractQTableAgent(
-      double learningRate,
-      double explorationRate,
       double learningRateDecay,
       double explorationRateDecay,
       double discountFactor, int seed,
@@ -45,8 +43,6 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
       int stateSpaceDimension,
       int actionSpaceDimension
   ) {
-    this.learningRate = learningRate;
-    this.explorationRate = explorationRate;
     this.learningRateDecay = learningRateDecay;
     this.explorationRateDecay = explorationRateDecay;
     this.discountFactor = discountFactor;
@@ -61,12 +57,14 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
         qTableA[i][j] = initializer.get();
       }
     }
+
+    learningRates = new double[stateSpaceDimension];
+    explorationRates = new double[stateSpaceDimension];
+    visitsNumber = new int[stateSpaceDimension];
   }
 
 
   public AbstractQTableAgent(
-      @JsonProperty("learningRate") double learningRate,
-      @JsonProperty("explorationRate") double explorationRate,
       @JsonProperty("learningRateDecay") double learningRateDecay,
       @JsonProperty("explorationRateDecay") double explorationRateDecay,
       @JsonProperty("discountFactor") double discountFactor,
@@ -75,16 +73,8 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
       @JsonProperty("stateSpaceDimension") int stateSpaceDimension,
       @JsonProperty("actionSpaceDimension") int actionSpaceDimension
   ) {
-    this.learningRate = learningRate;
-    this.explorationRate = explorationRate;
-    this.learningRateDecay = learningRateDecay;
-    this.explorationRateDecay = explorationRateDecay;
-    this.discountFactor = discountFactor;
-    this.seed = seed;
-    this.random = new Random(seed);
+    this(learningRateDecay, explorationRateDecay, discountFactor, seed, () -> 0.0, stateSpaceDimension, actionSpaceDimension);
     this.qTableA = copyOf(qTable);
-    this.stateSpaceDimension = stateSpaceDimension;
-    this.actionSpaceDimension = actionSpaceDimension;
   }
 
   private static double[][] copyOf(double[][] o) {
@@ -102,24 +92,15 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
     } else {
       initialized = true;
     }
-
-    action = random.nextDouble() < explorationRate ? random.nextInt(actionSpaceDimension) : getMaxAction(
+    visitsNumber[newState]++;
+    learningRates[newState] = 1 / Math.pow(visitsNumber[newState], learningRateDecay);
+    explorationRates[newState] = Math.max(1 / Math.pow(visitsNumber[newState], explorationRateDecay), 0.05);
+    action = random.nextDouble() < explorationRates[newState] ? random.nextInt(actionSpaceDimension) : getMaxAction(
         newState,
         qTableA
     );
     previousState = newState;
-    learningRate = learningRate * learningRateDecay;
-    explorationRate = explorationRate * explorationRateDecay;
-
     return action;
-  }
-
-  public double getExplorationRate() {
-    return explorationRate;
-  }
-
-  public void setExplorationRate(double explorationRate) {
-    this.explorationRate = explorationRate;
   }
 
   public int getInputDimension() {
@@ -128,14 +109,6 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
 
   public int getOutputDimension() {
     return actionSpaceDimension;
-  }
-
-  public double getLearningRate() {
-    return learningRate;
-  }
-
-  public void setLearningRate(double learningRate) {
-    this.learningRate = learningRate;
   }
 
   protected int getMaxAction(int state, double[][] qTable) {
@@ -164,8 +137,6 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
         qTableA,
         stateSpaceDimension,
         actionSpaceDimension,
-        learningRate,
-        explorationRate,
         learningRateDecay,
         explorationRateDecay,
         discountFactor

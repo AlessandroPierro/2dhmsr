@@ -4,15 +4,17 @@ import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.rl.AveragedRewardFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredObservationFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.RLController;
+import it.units.erallab.hmsrobots.core.controllers.rl.RLListener;
 import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
-import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.BinaryInputConverter;
-import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.BinaryOutputConverter;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.ExpectedSARSAAgent;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.BinaryInputConverter;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.BinaryOutputConverter;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.AreaRatio;
 import it.units.erallab.hmsrobots.core.sensors.Sensor;
+import it.units.erallab.hmsrobots.core.sensors.Touch;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
@@ -35,33 +37,31 @@ import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses
 
 public class ExperimentRL {
   public static void main(String[] args) {
+
     // Command line arguments
     String robotShape = args[0];
-    // TODO : Automate outputDimension counting
-    int outputDimension = Integer.parseInt(args[1]);
-    int epochs = Integer.parseInt(args[2]);
-    int trainEpisodes = Integer.parseInt(args[3]);
-    int testEpisodes = Integer.parseInt(args[4]);
-    String path = args[5];
-
-    String name = "QLearning";
+    int trainingTime = Integer.parseInt(args[1]);
+    int testingTime = Integer.parseInt(args[2]);
+    String path = args[3];
 
     // Settings
-    double learningRate = 0.1;
-    double explorationRate = 0.85;
-    double learningRateDecay = 0.995;
-    double explorationRateDecay = 0.995;
+    String name = "ExpectedSARSA";
+    double learningRateDecay = 0.501;
+    double explorationRateDecay = 0.501;
     double discountFactor = 0.99;
 
     // Create the robot
-    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+vxy-0")
+    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-a+t+vx-0")
         .apply(RobotUtils.buildShape(robotShape));
     Grid<Boolean> shape = Grid.create(body, Objects::nonNull);
 
+    // Compute outputDimension
+    int outputDimension = shape.stream().mapToInt(s -> s.value() ? 1 : 0).sum();
+
     // Create the list of sensors to be used by RL
-    // TODO Check for better usage
     Set<Class<? extends Sensor>> usedSensors = new HashSet<>();
     usedSensors.add(AreaRatio.class);
+    usedSensors.add(Touch.class);
 
     // Split the robot in 4 cardinal clusters
     Set<Set<Grid.Key>> clusters = computeCardinalPoses(shape);
@@ -78,36 +78,19 @@ public class ExperimentRL {
         clustersList
     );
 
-    // Create input converter
-    // TODO Get lower/upper bounds from observation function based on sensors domains
-    // TODO How to know the correct number of bins? (touch sensors vs velocity)
     int inputDimension = observationFunction.getOutputDimension();
-    //double[] binsUpperBound = new double[inputDimension];
-    //double[] binsLowerBound = new double[inputDimension];
-    //int[] binsNumber = new int[inputDimension];
-
-    //int numberPartitions = 2;
-
-    //Arrays.fill(binsUpperBound, 1.0);
-    //Arrays.fill(binsLowerBound, 0.0);
-    //Arrays.fill(binsNumber, numberPartitions);
-
-    //DiscreteRL.InputConverter standardInputConverter = new EquispacedInputConverter(
-    //    inputDimension,
-    //    binsUpperBound,
-    //    binsLowerBound,
-    //    binsNumber
-    //);
 
     // Create binary input converter
-    DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(inputDimension, 0.45);
+    double[] splitValues = new double[inputDimension];
+    Arrays.fill(splitValues, 0.5);
+    DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(inputDimension, splitValues);
 
-    // Create output converter
+    // Create binary output converter
     DiscreteRL.OutputConverter outputConverter;
     outputConverter = new BinaryOutputConverter(outputDimension, clustersList, 0.5);
 
     // Create Random
-    Random random = new Random(50);
+    Random random = new Random(42);
 
     // Create QTable initializer
     double averageQ = 0.0;
@@ -116,8 +99,6 @@ public class ExperimentRL {
 
     // Instantiate Tabular Q-Learning agent
     ExpectedSARSAAgent rlAgentDiscrete = new ExpectedSARSAAgent(
-        learningRate,
-        explorationRate,
         learningRateDecay,
         explorationRateDecay,
         discountFactor, 50,
@@ -131,83 +112,56 @@ public class ExperimentRL {
 
     // Create the reward function
     ToDoubleFunction<Grid<Voxel>> rewardFunction;
-    rewardFunction = new AveragedRewardFunction(clustersList, 5);
+    rewardFunction = new AveragedRewardFunction(clustersList, 4);
 
     // Create the RL controller and apply it to the body
     RLController rlController;
     rlController = new RLController(rewardFunction, observationFunction, rlAgent, clustersList);
-    StepController stepController = new StepController(rlController, 0.4);
+    StepController stepController = new StepController(rlController, 0.25);
     Robot robot = new Robot(stepController, SerializationUtils.clone(body));
 
-    Locomotion locomotion;
+    System.out.println("AverageReward,MinReward,MaxReward");
 
-    double currentExplorationRate = explorationRate;
-    double currentLearningRate = learningRate;
+    // Train period
+    Locomotion locomotion = new Locomotion(trainingTime, Locomotion.createTerrain("flat"), new Settings());
+    RLListener listener = new RLListener();
+    locomotion.apply(robot, listener);
 
-    System.out.println("Epoch,Episode,Kind,AverageReward,MinReward,MaxReward,ExplorationRate,LearningRate");
+    double averageReward = rlController.getAverageReward();
+    double minReward = rlController.getMinReward();
+    double maxReward = rlController.getMaxReward();
 
-    for (int i = 1; i <= epochs; ++i) {
-      // Training episodes
-      for (int j = 1; j <= trainEpisodes; j++) {
-        locomotion = new Locomotion(200, Locomotion.createTerrain("flat"), new Settings());
-        GridFileWriter.save(
-            locomotion,
-            Grid.create(1, 1, new NamedValue<>(robotShape + " - " + name + " (train)", robot)),
-            512,
-            256,
-            0,
-            15,
-            VideoUtils.EncoderFacility.JCODEC,
-            new File(path + name + "_" + robotShape + "_" + i + "-" + j + ".mp4"),
-            Drawers::basicWithMiniWorld
-        );
+    System.out.println(averageReward + "," + minReward + "," + maxReward);
 
-        double averageReward = rlController.getAverageReward();
-        double minReward = rlController.getMinReward();
-        double maxReward = rlController.getMaxReward();
+    // Test period (exploration rate = 0.05)
+    locomotion = new Locomotion(testingTime, Locomotion.createTerrain("flat"), new Settings());
+    GridFileWriter.save(
+        locomotion,
+        Grid.create(1, 1, new NamedValue<>(robotShape + " - " + name + " (test)", robot)),
+        640,
+        320,
+        0,
+        20,
+        VideoUtils.EncoderFacility.JCODEC,
+        new File(path + "test_" + name + "_" + robotShape + ".mp4"),
+        Drawers::basicWithMiniWorldAndRL
+    );
 
-        currentExplorationRate = rlAgentDiscrete.getExplorationRate();
-        currentLearningRate = rlAgentDiscrete.getLearningRate();
+    averageReward = rlController.getAverageReward();
+    minReward = rlController.getMinReward();
+    maxReward = rlController.getMaxReward();
 
-        System.out.println(i + "," + j + "," + "train" + "," + averageReward + "," + minReward + "," + maxReward + "," + currentExplorationRate + "," + currentLearningRate);
-      }
+    System.out.println(averageReward + "," + minReward + "," + maxReward);
 
-      rlAgentDiscrete.setExplorationRate(0.05);
-      rlAgentDiscrete.setLearningRate(0);
-
-      // Test episodes (little/no exploration)
-      for (int j = 1; j <= testEpisodes; j++) {
-        locomotion = new Locomotion(100, Locomotion.createTerrain("flat"), new Settings());
-        GridFileWriter.save(
-            locomotion,
-            Grid.create(1, 1, new NamedValue<>(robotShape + " - " + name + " (test)", robot)),
-            640,
-            320,
-            0,
-            20,
-            VideoUtils.EncoderFacility.JCODEC,
-            new File(path + "test_" + name + "_" + robotShape + "_" + i + "-" + j + ".mp4"),
-            Drawers::basicWithMiniWorldAndRL
-        );
-
-        double averageReward = rlController.getAverageReward();
-        double minReward = rlController.getMinReward();
-        double maxReward = rlController.getMaxReward();
-
-        System.out.println(i + "," + j + "," + "test" + "," + averageReward + "," + minReward + "," + maxReward + ",0,0");
-      }
-
-      rlAgentDiscrete.setExplorationRate(currentExplorationRate);
-      rlAgentDiscrete.setLearningRate(currentLearningRate);
-
-      String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.JSON);
-      try {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(path + name + "_" + robotShape + "_" + i + ".json"));
-        writer.write(rlString);
-        writer.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+    // Save RL Agent to file
+    String rlString = SerializationUtils.serialize(rlAgentDiscrete, SerializationUtils.Mode.JSON);
+    try {
+      BufferedWriter writer = new BufferedWriter(new FileWriter(path + name + "_" + robotShape + ".json"));
+      writer.write(rlString);
+      writer.close();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
+
   }
 }
