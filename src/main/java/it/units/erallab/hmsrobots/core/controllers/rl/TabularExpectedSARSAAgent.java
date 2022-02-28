@@ -14,7 +14,6 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
       double discountFactor,
       int seed,
       Supplier<Double> initializer,
-      boolean episodic,
       int stateSpaceDimension,
       int actionSpaceDimension
   ) {
@@ -26,7 +25,6 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
         discountFactor,
         seed,
         initializer,
-        episodic,
         stateSpaceDimension,
         actionSpaceDimension
     );
@@ -38,7 +36,6 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
       @JsonProperty("learningRateDecay") double learningRateDecay,
       @JsonProperty("explorationRateDecay") double explorationRateDecay,
       @JsonProperty("discountFactor") double discountFactor,
-      @JsonProperty("episodic") boolean episodic,
       @JsonProperty("qTable") double[][] qTable,
       @JsonProperty("seed") int seed,
       @JsonProperty("stateSpaceDimension") int stateSpaceDimension,
@@ -50,7 +47,6 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
         learningRateDecay,
         explorationRateDecay,
         discountFactor,
-        episodic,
         qTable,
         seed,
         stateSpaceDimension,
@@ -59,12 +55,12 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
   }
 
   @Override
-  protected void updateQTable(int previousState, int action, double reward, int newState) {
+  protected void updateQTable(int previousState, int action, double reward, int newState, double[][] qTable) {
     double q = qTable[previousState][action];
-    int maxQAction = getMaxAction(newState);
+    int maxQAction = getMaxAction(newState, qTable);
     double expectedSARSA = 0.0;
     for (int possibleAction = 0; possibleAction < actionSpaceDimension; possibleAction++) {
-      expectedSARSA += qTable[newState][possibleAction] * (explorationRate / actionSpaceDimension + (possibleAction == maxQAction ? 1-explorationRate : 0.0));
+      expectedSARSA += qTable[newState][possibleAction] * (explorationRate / actionSpaceDimension + (possibleAction == maxQAction ? 1 - explorationRate : 0.0));
     }
     qTable[previousState][action] = q + learningRate * (reward + discountFactor * expectedSARSA - q);
   }

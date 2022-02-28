@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
 import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
+import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeClusteredByPositionPoses;
 
 public class ExperimentRL {
   public static void main(String[] args) {
@@ -118,7 +119,6 @@ public class ExperimentRL {
         explorationRateDecay,
         discountFactor, 50,
         qtableInitializer,
-        true,
         (int) Math.pow(2, inputDimension),
         (int) Math.pow(2, 4)
     );

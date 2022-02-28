@@ -12,7 +12,6 @@ public class TabularQLearningAgent extends AbstractQTableAgent {
       double discountFactor,
       int seed,
       Supplier<Double> initializer,
-      boolean episodic,
       int stateSpaceDimension,
       int actionSpaceDimension
   ) {
@@ -24,16 +23,15 @@ public class TabularQLearningAgent extends AbstractQTableAgent {
         discountFactor,
         seed,
         initializer,
-        episodic,
         stateSpaceDimension,
         actionSpaceDimension
     );
   }
 
   @Override
-  protected void updateQTable(int previousState, int action, double reward, int newState) {
+  protected void updateQTable(int previousState, int action, double reward, int newState, double[][] qTable) {
     double q = qTable[previousState][action];
-    double maxQ = getMaxQ(newState);
+    double maxQ = getMaxQ(newState, qTable);
     qTable[previousState][action] = q + learningRate * (reward + discountFactor * maxQ - q);
   }
 }
