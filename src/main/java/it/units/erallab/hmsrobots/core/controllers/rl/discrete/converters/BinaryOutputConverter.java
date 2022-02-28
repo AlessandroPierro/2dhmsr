@@ -1,4 +1,4 @@
-package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
+package it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters;
 
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 import it.units.erallab.hmsrobots.util.Grid;
