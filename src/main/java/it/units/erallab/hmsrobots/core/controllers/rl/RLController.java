@@ -1,12 +1,9 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import it.units.erallab.hmsrobots.core.controllers.AbstractController;
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
+import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
-import it.units.erallab.hmsrobots.core.sensors.CompositeSensor;
-import it.units.erallab.hmsrobots.core.sensors.Sensor;
-import it.units.erallab.hmsrobots.core.sensors.Velocity;
 import it.units.erallab.hmsrobots.core.snapshots.RLControllerState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
@@ -14,7 +11,6 @@ import it.units.erallab.hmsrobots.util.Grid;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.ToDoubleFunction;
 
@@ -32,9 +28,6 @@ public class RLController extends AbstractController implements Snapshottable {
   private double[] action;
 
   private int totalSteps = 0;
-  private double maxSpeed = Double.NEGATIVE_INFINITY;
-  private double minSpeed = Double.POSITIVE_INFINITY;
-  private double averageSpeed = 0.0;
   private double maxReward = Double.NEGATIVE_INFINITY;
   private double minReward = Double.POSITIVE_INFINITY;
   private double averageReward = 0.0;
@@ -70,23 +63,6 @@ public class RLController extends AbstractController implements Snapshottable {
 
     totalSteps += 1;
 
-    /* Track speed
-    int counter = 0;
-    double speed = 0.0;
-    for (List<Grid.Key> cluster : clusters) {
-      for (Grid.Key key : cluster) {
-        // TODO : Improve this
-        if (voxels.get(key.x(), key.y()).getSensors().get(1) instanceof CompositeSensor) {
-          speed += ((CompositeSensor) voxels.get(key.x(), key.y()).getSensors().get(1)).getSensor()
-              .getReadings()[0];
-          ++counter;
-        }
-      }
-    }
-    averageSpeed = (averageSpeed * (totalSteps - 1) + speed.get() / (double) n.get()) / totalSteps;
-    maxSpeed = Math.max(maxSpeed, speed.get() / (double) n.get());
-    minSpeed = Math.min(minSpeed, speed.get() / (double) n.get());
-*/
     // Track reward
     reward = rewardFunction.applyAsDouble(voxels);
     averageReward = (averageReward * (totalSteps - 1) + reward) / totalSteps;
@@ -122,18 +98,6 @@ public class RLController extends AbstractController implements Snapshottable {
 
   public double getMinReward() {
     return minReward;
-  }
-
-  public double getAverageSpeed() {
-    return averageSpeed;
-  }
-
-  public double getMaxSpeed() {
-    return maxSpeed;
-  }
-
-  public double getMinSpeed() {
-    return minSpeed;
   }
 
   @Override

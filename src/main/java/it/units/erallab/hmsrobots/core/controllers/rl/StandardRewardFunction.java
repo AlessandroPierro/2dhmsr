@@ -1,4 +1,4 @@
-package it.units.erallab.hmsrobots;
+package it.units.erallab.hmsrobots.core.controllers.rl;
 
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.util.Grid;
@@ -6,7 +6,7 @@ import it.units.erallab.hmsrobots.util.Grid;
 import java.util.ArrayList;
 import java.util.function.ToDoubleFunction;
 
-class StandardRewardFunction implements ToDoubleFunction<Grid<Voxel>> {
+public class StandardRewardFunction implements ToDoubleFunction<Grid<Voxel>> {
   /**
    * Reward function based on the x velocity of each voxel in the robot.
    *
@@ -16,12 +16,12 @@ class StandardRewardFunction implements ToDoubleFunction<Grid<Voxel>> {
   private final ArrayList<ArrayList<Grid.Key>> clusters;
   private final double baseline;
 
-  StandardRewardFunction(ArrayList<ArrayList<Grid.Key>> clusters, double baseline) {
+  public StandardRewardFunction(ArrayList<ArrayList<Grid.Key>> clusters, double baseline) {
     this.clusters = clusters;
     this.baseline = baseline;
   }
 
-  StandardRewardFunction(ArrayList<ArrayList<Grid.Key>> clusters) {
+  public StandardRewardFunction(ArrayList<ArrayList<Grid.Key>> clusters) {
     this(clusters, 0);
   }
 

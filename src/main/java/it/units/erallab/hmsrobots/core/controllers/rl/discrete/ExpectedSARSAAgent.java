@@ -1,12 +1,12 @@
-package it.units.erallab.hmsrobots.core.controllers.rl;
+package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.function.Supplier;
 
-public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
+public class ExpectedSARSAAgent extends AbstractQTableAgent {
 
-  public TabularExpectedSARSAAgent(
+  public ExpectedSARSAAgent(
       double learningRate,
       double explorationRate,
       double learningRateDecay,
@@ -30,7 +30,7 @@ public class TabularExpectedSARSAAgent extends AbstractQTableAgent {
     );
   }
 
-  public TabularExpectedSARSAAgent(
+  public ExpectedSARSAAgent(
       @JsonProperty("learningRate") double learningRate,
       @JsonProperty("explorationRate") double explorationRate,
       @JsonProperty("learningRateDecay") double learningRateDecay,

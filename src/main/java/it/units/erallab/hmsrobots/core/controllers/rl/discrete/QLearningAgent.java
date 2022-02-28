@@ -1,10 +1,10 @@
-package it.units.erallab.hmsrobots.core.controllers.rl;
+package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
 
 import java.util.function.Supplier;
 
-public class TabularQLearningAgent extends AbstractQTableAgent {
+public class QLearningAgent extends AbstractQTableAgent {
 
-  public TabularQLearningAgent(
+  public QLearningAgent(
       double learningRate,
       double explorationRate,
       double learningRateDecay,

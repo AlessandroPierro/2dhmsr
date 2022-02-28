@@ -1,4 +1,4 @@
-package it.units.erallab.hmsrobots;
+package it.units.erallab.hmsrobots.core.controllers.rl;
 
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.CompositeSensor;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, double[]> {
+public class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, double[]> {
 
   private final Set<Class<? extends Sensor>> usedSensors;
   private final List<List<Grid.Key>> clusters;
@@ -20,7 +20,7 @@ class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, do
   private final int sensorsDimension;
   private final int outputDimension;
 
-  ClusteredObservationFunction(
+  public ClusteredObservationFunction(
       Grid<Voxel> body,
       Set<Class<? extends Sensor>> usedSensors,
       List<List<Grid.Key>> clusters
@@ -92,7 +92,7 @@ class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, do
     return output;
   }
 
-  int getOutputDimension() {
+  public int getOutputDimension() {
     return outputDimension;
   }
 }

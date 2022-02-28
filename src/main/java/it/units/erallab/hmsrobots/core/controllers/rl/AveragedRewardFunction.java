@@ -1,4 +1,4 @@
-package it.units.erallab.hmsrobots;
+package it.units.erallab.hmsrobots.core.controllers.rl;
 
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
@@ -9,19 +9,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 
-class AveragedRewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettable {
+public class AveragedRewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettable {
 
   private final List<List<Grid.Key>> clusters;
   private final double[] rewards;
   private int step = 0;
 
-  AveragedRewardFunction(List<List<Grid.Key>> clusters, int steps) {
+  public AveragedRewardFunction(List<List<Grid.Key>> clusters, int steps) {
     this.clusters = clusters;
     this.rewards = new double[steps];
     Arrays.fill(this.rewards, 0);
   }
 
-  AveragedRewardFunction(List<List<Grid.Key>> clusters) {
+  public AveragedRewardFunction(List<List<Grid.Key>> clusters) {
     this(clusters, 0);
   }
 

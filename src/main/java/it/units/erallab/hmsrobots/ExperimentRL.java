@@ -1,10 +1,14 @@
 package it.units.erallab.hmsrobots;
 
 import it.units.erallab.hmsrobots.core.controllers.StepController;
-import it.units.erallab.hmsrobots.core.controllers.rl.ContinuousRL;
-import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
+import it.units.erallab.hmsrobots.core.controllers.rl.AveragedRewardFunction;
+import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredObservationFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.RLController;
-import it.units.erallab.hmsrobots.core.controllers.rl.TabularExpectedSARSAAgent;
+import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.BinaryInputConverter;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.BinaryOutputConverter;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.ExpectedSARSAAgent;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.AreaRatio;
@@ -28,7 +32,6 @@ import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
 import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
-import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeClusteredByPositionPoses;
 
 public class ExperimentRL {
   public static void main(String[] args) {
@@ -112,7 +115,7 @@ public class ExperimentRL {
     Supplier<Double> qtableInitializer = () -> averageQ + stdQ * random.nextGaussian();
 
     // Instantiate Tabular Q-Learning agent
-    TabularExpectedSARSAAgent rlAgentDiscrete = new TabularExpectedSARSAAgent(
+    ExpectedSARSAAgent rlAgentDiscrete = new ExpectedSARSAAgent(
         learningRate,
         explorationRate,
         learningRateDecay,

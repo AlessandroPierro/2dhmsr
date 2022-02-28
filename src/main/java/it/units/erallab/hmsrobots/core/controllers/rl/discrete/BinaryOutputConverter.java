@@ -1,6 +1,6 @@
-package it.units.erallab.hmsrobots;
+package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
 
-import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 import it.units.erallab.hmsrobots.util.Grid;
 
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 import static java.lang.Math.abs;
 
-class BinaryOutputConverter implements DiscreteRL.OutputConverter {
+public class BinaryOutputConverter implements DiscreteRL.OutputConverter {
   private final int outputDimension;
   private final int numberClusters;
 
@@ -17,7 +17,7 @@ class BinaryOutputConverter implements DiscreteRL.OutputConverter {
   private final List<List<Grid.Key>> clusters;
 
 
-  BinaryOutputConverter(
+  public BinaryOutputConverter(
       int outputDimension,
       List<List<Grid.Key>> clusters,
       double force

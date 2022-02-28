@@ -1,6 +1,6 @@
-package it.units.erallab.hmsrobots;
+package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
 
-import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 
 import java.util.function.Function;
 

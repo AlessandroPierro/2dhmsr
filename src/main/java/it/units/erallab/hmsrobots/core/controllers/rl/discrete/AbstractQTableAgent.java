@@ -1,4 +1,4 @@
-package it.units.erallab.hmsrobots.core.controllers.rl;
+package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.snapshots.QTableAgentState;

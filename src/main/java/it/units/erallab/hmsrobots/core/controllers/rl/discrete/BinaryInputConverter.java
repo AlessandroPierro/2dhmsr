@@ -1,6 +1,6 @@
-package it.units.erallab.hmsrobots;
+package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
 
-import it.units.erallab.hmsrobots.core.controllers.rl.DiscreteRL;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 
 import java.util.function.Function;
 
@@ -9,7 +9,7 @@ public class BinaryInputConverter implements DiscreteRL.InputConverter {
   private final int inputDimension;
   private final double cutoff;
 
-  BinaryInputConverter(
+  public BinaryInputConverter(
       int inputDimension,
       double cutoff
   ) {
