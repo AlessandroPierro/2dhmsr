@@ -39,12 +39,10 @@ public class BinaryOutputConverter implements DiscreteRL.OutputConverter {
   @Override
   public double[] apply(Integer integer) {
     double[] controls = new double[numberClusters];
-    // TODO Check for improvements
-    char[] binary = String.format("%04d", Integer.parseInt(Integer.toBinaryString(integer))).toCharArray();
+    char[] binary = String.format("%0"+numberClusters+"d", Integer.parseInt(Integer.toBinaryString(integer))).toCharArray();
     for (int i = 0; i < numberClusters; i++) {
       controls[i] = (binary[i] == '0') ? force : -force;
     }
-
     double[] output = new double[outputDimension];
     int j = 0;
     for (int i = 0; i < numberClusters; i++) {
