@@ -92,9 +92,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
     } else {
       initialized = true;
     }
-    visitsNumber[newState]++;
-    learningRates[newState] = 1 / Math.pow(visitsNumber[newState], learningRateDecay);
-    explorationRates[newState] = Math.max(1 / Math.pow(visitsNumber[newState], explorationRateDecay), 0.05);
+    updateRates(newState);
     action = random.nextDouble() < explorationRates[newState] ? random.nextInt(actionSpaceDimension) : getMaxAction(
         newState,
         qTableA
@@ -150,5 +148,11 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   }
 
   protected void updateQTable(int previousState, int action, double reward, int newState, double[][] qTable) {
+  }
+
+  protected void updateRates(int newState) {
+    visitsNumber[newState]++;
+    learningRates[newState] = 1 / Math.pow(visitsNumber[newState], learningRateDecay);
+    explorationRates[newState] = Math.max(1 / Math.pow(visitsNumber[newState], explorationRateDecay), 0.05);
   }
 }
