@@ -37,7 +37,7 @@ import java.util.stream.IntStream;
 
 public class Locomotion extends AbstractTask<Robot, Outcome> {
 
-  public final static double INITIAL_PLACEMENT_X_GAP = 50d;
+  public final static double INITIAL_PLACEMENT_X_GAP = 1d;
   public final static double INITIAL_PLACEMENT_Y_GAP = 1d;
   public final static double TERRAIN_BORDER_HEIGHT = 100d;
   public static final int TERRAIN_LENGTH = 2000;

@@ -47,15 +47,10 @@ public class ClusteredRLController extends AbstractController implements Snapsho
   public Grid<Double> computeControlSignals(
       double t, Grid<Voxel> voxels
   ) {
-    System.out.println(1);
     reward = rewardFunction.applyAsDouble(voxels);
-    System.out.println(2);
     observation = observationFunction.apply(t, voxels);
-    System.out.println(3);
     action = rl.apply(t, observation, reward);
-    System.out.println(4);
     controlSignals = controlFunction.apply(action);
-    System.out.println(5);
     return controlSignals;
   }
 

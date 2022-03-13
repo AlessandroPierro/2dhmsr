@@ -4,6 +4,8 @@ import it.units.erallab.hmsrobots.core.snapshots.RLControllerState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 import it.units.erallab.hmsrobots.core.snapshots.SnapshotListener;
 
+import java.util.Arrays;
+
 public class RLListener implements SnapshotListener {
 
   double lastT = 0d;
@@ -24,5 +26,7 @@ public class RLListener implements SnapshotListener {
 
   @Override
   public void listen(double t, Snapshot snapshot) {
+    RLControllerState state = extractState(snapshot);
+    System.out.println(state.getReward()+"\t"+ Arrays.toString(state.getAction()) +"\t"+ Arrays.toString(state.getObservation()));
   }
 }

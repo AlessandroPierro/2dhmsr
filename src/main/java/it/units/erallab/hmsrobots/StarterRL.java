@@ -3,6 +3,7 @@ package it.units.erallab.hmsrobots;
 import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredRLController;
 import it.units.erallab.hmsrobots.core.controllers.rl.DifferentialRewardFunction;
+import it.units.erallab.hmsrobots.core.controllers.rl.RLListener;
 import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.QLearningAgent;
@@ -14,7 +15,6 @@ import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
-import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
 import org.dyn4j.dynamics.Settings;
 
 import java.util.ArrayList;
@@ -47,8 +47,8 @@ public class StarterRL {
 
     // Configs
     String shape = "biped-4x3";
-    String sensorConfig = "uniform-a+vxy+t-0.01";
-    String rlSensorConfig = "uniform-a+t-0.01";
+    String sensorConfig = "uniform-a+vxy-0";
+    String rlSensorConfig = "uniform-a-0";
     int nClusters = 4;
     double controllerStep = 0.5;
     double learningRateDecay = 0.99;
@@ -77,7 +77,7 @@ public class StarterRL {
         explorationRateDecay,
         discountFactor,
         seed,
-        (int) Math.pow(2, sensorDimension),
+        (int) Math.pow(2, sensorDimension * nClusters),
         (int) Math.pow(2, nClusters)
     );
 
@@ -93,7 +93,7 @@ public class StarterRL {
     StepController stepController = new StepController(rlController, controllerStep);
     Robot robot = new Robot(stepController, SerializationUtils.clone(body));
 
-    Locomotion locomotion = new Locomotion(500, Locomotion.createTerrain("flatWithStart-2"), new Settings());
-    GridOnlineViewer.run(locomotion, robot);
+    Locomotion locomotion = new Locomotion(1000, Locomotion.createTerrain("flatWithStart-2"), new Settings());
+    locomotion.apply(robot, new RLListener());
   }
 }

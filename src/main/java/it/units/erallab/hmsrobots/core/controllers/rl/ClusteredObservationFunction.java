@@ -42,7 +42,8 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
           .getSensors()
           .stream()
           .filter(Objects::nonNull)
-          .map(s -> s instanceof CompositeSensor c ? c.getInnermostSensor() : s)
+          .map(s -> CompositeSensor.class.isAssignableFrom(s.getClass()) ?
+              ((CompositeSensor) s).getInnermostSensor() : s)
           .map(s -> s.getClass().getName())
           .collect(Collectors.toSet());
       this.readingsDimension = testBody.get(0, 0)
@@ -55,6 +56,8 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
 
     @Override
     public Boolean apply(Sensor sensor) {
+      sensor = CompositeSensor.class.isAssignableFrom(sensor.getClass()) ?
+          ((CompositeSensor) sensor).getInnermostSensor() : sensor;
       return sensorsType.contains(sensor.getClass().getName());
     }
 
@@ -79,19 +82,19 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
         for (Sensor sensor : voxel.getSensors()) {
           if (sensorFilter.apply(sensor)) {
             for (double x : sensor.getReadings()) {
-              temp[k] = x;
+              temp[k] = x / cluster.size();
               k++;
             }
           }
         }
         for (int j = 0; j < nSensorReadings; j++) {
           observation[i * nSensorReadings + j] += temp[j];
+        }
       }
     }
-  }
 
     return observation;
-}
+  }
 
   public int getOutputDimension() {
     return nClusters * nSensorReadings;
