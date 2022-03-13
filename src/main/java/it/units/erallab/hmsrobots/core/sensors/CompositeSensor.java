@@ -74,7 +74,7 @@ public abstract class CompositeSensor extends AbstractSensor {
   }
   
   public Sensor getInnermostSensor() {
-    return sensor instanceof CompositeSensor ? sensor.getInnermostSensor() : sensor;
+    return sensor instanceof CompositeSensor cs ? cs.getInnermostSensor() : sensor;
   }
 
 }

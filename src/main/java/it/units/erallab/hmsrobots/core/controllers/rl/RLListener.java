@@ -24,10 +24,5 @@ public class RLListener implements SnapshotListener {
 
   @Override
   public void listen(double t, Snapshot snapshot) {
-    RLControllerState state = extractState(snapshot);
-    if (t - lastT > 100) {
-      System.out.println("Time: " + t + " - Reward: " + state.getReward());
-      lastT = t;
-    }
   }
 }

@@ -1,7 +1,5 @@
 package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
 
-import java.util.function.Supplier;
-
 public class QLearningAgent extends AbstractQTableAgent {
 
   public QLearningAgent(
@@ -9,7 +7,6 @@ public class QLearningAgent extends AbstractQTableAgent {
       double explorationRateDecay,
       double discountFactor,
       int seed,
-      Supplier<Double> initializer,
       int stateSpaceDimension,
       int actionSpaceDimension
   ) {
@@ -18,7 +15,6 @@ public class QLearningAgent extends AbstractQTableAgent {
         explorationRateDecay,
         discountFactor,
         seed,
-        initializer,
         stateSpaceDimension,
         actionSpaceDimension
     );

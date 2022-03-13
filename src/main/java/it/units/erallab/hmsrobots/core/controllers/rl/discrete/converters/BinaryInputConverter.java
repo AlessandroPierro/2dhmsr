@@ -2,38 +2,32 @@ package it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters;
 
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 
-import java.util.function.Function;
-
 public class BinaryInputConverter implements DiscreteRL.InputConverter {
 
   private final int inputDimension;
-  private final double[] splitValues;
+  private final double splitValue;
 
   public BinaryInputConverter(
       int inputDimension,
-      double[] splitValues
+      double splitValue
   ) {
     this.inputDimension = inputDimension;
-    this.splitValues = splitValues;
+    this.splitValue = splitValue;
+  }
+
+  public BinaryInputConverter(
+      int inputDimension
+  ) {
+    this(inputDimension, 0.5);
   }
 
   @Override
   public Integer apply(double[] doubles) {
-    StringBuilder result = new StringBuilder();
+    int input = 0;
     for (int i = 0; i < inputDimension; i++) {
-      result.append(doubles[i] > splitValues[i] ? "1" : "0");
+      input += doubles[i] < splitValue ? 0 : (int) Math.pow(2, i);
     }
-    return Integer.parseInt(result.toString(), 2);
-  }
-
-  @Override
-  public <V> Function<V, Integer> compose(Function<? super V, ? extends double[]> before) {
-    return DiscreteRL.InputConverter.super.compose(before);
-  }
-
-  @Override
-  public <V> Function<double[], V> andThen(Function<? super Integer, ? extends V> after) {
-    return DiscreteRL.InputConverter.super.andThen(after);
+    return input;
   }
 
   @Override

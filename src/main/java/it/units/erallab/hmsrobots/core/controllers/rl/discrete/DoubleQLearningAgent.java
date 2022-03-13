@@ -3,7 +3,7 @@ package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
 import java.util.function.Supplier;
 
 public class DoubleQLearningAgent extends AbstractQTableAgent {
-  private double[][] qTableB;
+  private final double[][] qTableB;
   private boolean lastTableIsA;
 
   public DoubleQLearningAgent(
@@ -11,7 +11,6 @@ public class DoubleQLearningAgent extends AbstractQTableAgent {
       double explorationRateDecay,
       double discountFactor,
       int seed,
-      Supplier<Double> initializer,
       int stateSpaceDimension,
       int actionSpaceDimension
   ) {
@@ -20,7 +19,6 @@ public class DoubleQLearningAgent extends AbstractQTableAgent {
         explorationRateDecay,
         discountFactor,
         seed,
-        initializer,
         stateSpaceDimension,
         actionSpaceDimension
     );
@@ -28,7 +26,7 @@ public class DoubleQLearningAgent extends AbstractQTableAgent {
     this.qTableB = new double[stateSpaceDimension][actionSpaceDimension];
     for (int i = 0; i < stateSpaceDimension; i++) {
       for (int j = 0; j < actionSpaceDimension; j++) {
-        this.qTableB[i][j] = initializer.get();
+        this.qTableB[i][j] = random.nextDouble();
       }
     }
   }

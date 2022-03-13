@@ -9,9 +9,7 @@ public class ExpectedSARSAAgent extends AbstractQTableAgent {
   public ExpectedSARSAAgent(
       double learningRateDecay,
       double explorationRateDecay,
-      double discountFactor,
-      int seed,
-      Supplier<Double> initializer,
+      double discountFactor, int seed,
       int stateSpaceDimension,
       int actionSpaceDimension
   ) {
@@ -20,7 +18,6 @@ public class ExpectedSARSAAgent extends AbstractQTableAgent {
         explorationRateDecay,
         discountFactor,
         seed,
-        initializer,
         stateSpaceDimension,
         actionSpaceDimension
     );
@@ -39,7 +36,6 @@ public class ExpectedSARSAAgent extends AbstractQTableAgent {
         learningRateDecay,
         explorationRateDecay,
         discountFactor,
-        qTable,
         seed,
         stateSpaceDimension,
         actionSpaceDimension
