@@ -43,7 +43,8 @@ public class DoubleQLearningAgent extends AbstractQTableAgent {
       initialized = true;
     }
 
-    updateRates(newState);
+    updateLearningRates(newState);
+    updateExplorationRates(newState);
 
     action = random.nextDouble() < explorationRates[newState] ? random.nextInt(actionSpaceDimension) : getMaxAction(
         newState,

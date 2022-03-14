@@ -22,7 +22,7 @@ public class DifferentialRewardFunction implements ToDoubleFunction<Grid<Voxel>>
     double currentReward = currentVelocity - previousVelocity;
     previousVelocity = currentVelocity;
 
-    return currentReward;
+    return currentVelocity;
   }
 
   @Override

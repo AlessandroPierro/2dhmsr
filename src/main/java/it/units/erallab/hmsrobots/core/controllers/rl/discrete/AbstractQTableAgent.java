@@ -6,9 +6,7 @@ import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Random;
-import java.util.function.Supplier;
 import java.util.random.RandomGenerator;
 
 public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
@@ -28,9 +26,15 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   @JsonProperty
   protected double[][] qTableA;
 
-  protected boolean learn = false;
-  protected int[] nVisits;
+  protected boolean learn = true;
+  protected boolean explore = true;
+  @JsonProperty
+  protected int[] nLearningVisits;
+  @JsonProperty
+  protected int[] nExplorationVisits;
+  @JsonProperty
   protected double[] learningRates;
+  @JsonProperty
   protected double[] explorationRates;
 
   protected boolean initialized = false;
@@ -40,7 +44,8 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   public AbstractQTableAgent(
       double learningRateDecay,
       double explorationRateDecay,
-      double discountFactor, int seed,
+      double discountFactor,
+      int seed,
       int stateSpaceDimension,
       int actionSpaceDimension
   ) {
@@ -55,11 +60,12 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
 
     for (int i = 0; i < stateSpaceDimension; i++) {
       for (int j = 0; j < actionSpaceDimension; j++) {
-        qTableA[i][j] = random.nextDouble();
+        qTableA[i][j] = 4;
       }
     }
 
-    nVisits = new int[stateSpaceDimension];
+    nLearningVisits = new int[stateSpaceDimension];
+    nExplorationVisits = new int[stateSpaceDimension];
     learningRates = new double[stateSpaceDimension];
     Arrays.fill(learningRates, 1d);
     explorationRates = new double[stateSpaceDimension];
@@ -74,38 +80,42 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
       @JsonProperty("qTable") double[][] qTable,
       @JsonProperty("seed") int seed,
       @JsonProperty("stateSpaceDimension") int stateSpaceDimension,
-      @JsonProperty("actionSpaceDimension") int actionSpaceDimension
+      @JsonProperty("actionSpaceDimension") int actionSpaceDimension,
+      @JsonProperty("nLearningVisits") int[] nLearningVisits,
+      @JsonProperty("nExplorationVisits") int[] nExplorationVisits,
+      @JsonProperty("learningRates") double[] learningRates,
+      @JsonProperty("explorationRates") double[] explorationRates
   ) {
-    this(
-        learningRateDecay,
-        explorationRateDecay,
-        discountFactor,
-        seed,
-        stateSpaceDimension,
-        actionSpaceDimension
-    );
-    this.qTableA = copyOf(qTable);
-  }
-
-  private static double[][] copyOf(double[][] o) {
-    double[][] c = new double[o.length][];
-    for (int i = 0; i < o.length; i++) {
-      c[i] = Arrays.copyOf(o[i], o[i].length);
-    }
-    return c;
+    this(learningRateDecay, explorationRateDecay, discountFactor, seed, stateSpaceDimension, actionSpaceDimension);
+    this.qTableA = Arrays.copyOf(qTable, qTable.length);
+    this.nLearningVisits = Arrays.copyOf(nLearningVisits, nLearningVisits.length);
+    this.nExplorationVisits = Arrays.copyOf(nExplorationVisits, nExplorationVisits.length);
+    this.learningRates = Arrays.copyOf(learningRates, learningRates.length);
+    this.explorationRates = Arrays.copyOf(explorationRates, explorationRates.length);
   }
 
   @Override
   public int apply(double t, int newState, double reward) {
     if (initialized && learn) {
       updateQTable(previousState, action, reward, newState, qTableA);
-      updateRates(newState);
+      updateLearningRates(newState);
     }
     initialized = true;
-    action = random.nextDouble() < explorationRates[newState] ?
-        random.nextInt(actionSpaceDimension) : getMaxAction(newState, qTableA);
+    if (explore) {
+      updateExplorationRates(newState);
+      action = random.nextDouble() < explorationRates[newState] ? random.nextInt(actionSpaceDimension) : getMaxAction(
+          newState,
+          qTableA
+      );
+    } else {
+      action = getMaxAction(newState, qTableA);
+    }
     previousState = newState;
     return action;
+  }
+
+  public void freezeExploration() {
+    explore = false;
   }
 
   public void freezeLearning() {
@@ -148,7 +158,8 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
         actionSpaceDimension,
         learningRateDecay,
         explorationRateDecay,
-        discountFactor
+        discountFactor,
+        previousState
     );
     return new Snapshot(content, this.getClass());
   }
@@ -158,16 +169,24 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
     initialized = false;
   }
 
+  public void unfreezeExploration() {
+    explore = true;
+  }
+
   public void unfreezeLearning() {
     learn = true;
   }
 
-  protected void updateQTable(int previousState, int action, double reward, int newState, double[][] qTable) {
+  protected void updateExplorationRates(int newState) {
+    nExplorationVisits[newState]++;
+    explorationRates[newState] = Math.max(1 / Math.pow(nExplorationVisits[newState], explorationRateDecay), 0.05);
   }
 
-  protected void updateRates(int newState) {
-    nVisits[newState]++;
-    learningRates[newState] = 1 / Math.pow(nVisits[newState], learningRateDecay);
-    explorationRates[newState] = Math.max(1 / Math.pow(nVisits[newState], explorationRateDecay), 0.05);
+  protected void updateLearningRates(int newState) {
+    nLearningVisits[newState]++;
+    learningRates[newState] = 1 / Math.pow(nLearningVisits[newState], learningRateDecay);
+  }
+
+  protected void updateQTable(int previousState, int action, double reward, int newState, double[][] qTable) {
   }
 }

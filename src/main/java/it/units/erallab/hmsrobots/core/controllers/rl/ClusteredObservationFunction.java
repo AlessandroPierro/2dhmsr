@@ -37,6 +37,7 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
     Set<String> sensorsType;
 
     SensorsFilter(String config) {
+      // TODO Future : generalize to the case of non-uniform sensing
       Grid<Voxel> testBody = RobotUtils.buildSensorizingFunction(config).apply(RobotUtils.buildShape("box-1x1"));
       this.sensorsType = testBody.get(0, 0)
           .getSensors()
@@ -56,6 +57,7 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
 
     @Override
     public Boolean apply(Sensor sensor) {
+      // TODO : check if this is the correct way to do this
       sensor = CompositeSensor.class.isAssignableFrom(sensor.getClass()) ?
           ((CompositeSensor) sensor).getInnermostSensor() : sensor;
       return sensorsType.contains(sensor.getClass().getName());
@@ -82,7 +84,8 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
         for (Sensor sensor : voxel.getSensors()) {
           if (sensorFilter.apply(sensor)) {
             for (double x : sensor.getReadings()) {
-              temp[k] = x / cluster.size();
+              // TODO : find a better way to normalize the readings
+              temp[k] = k == 0 ? x / cluster.size() : Math.max(x, temp[k]);
               k++;
             }
           }

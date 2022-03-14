@@ -10,6 +10,7 @@ public class QTableAgentState {
   private final double learningRateDecay;
   private final double explorationRateDecay;
   private final double discountFactor;
+  private final int state;
 
 
   public QTableAgentState(
@@ -18,7 +19,8 @@ public class QTableAgentState {
       int actionsNumber,
       double learningRateDecay,
       double explorationRateDecay,
-      double discountFactor
+      double discountFactor,
+      int state
   ) {
     this.qTable = copyOf(qTable);
     this.statesNumber = statesNumber;
@@ -26,6 +28,7 @@ public class QTableAgentState {
     this.learningRateDecay = learningRateDecay;
     this.explorationRateDecay = explorationRateDecay;
     this.discountFactor = discountFactor;
+    this.state = state;
   }
 
   private static double[][] copyOf(double[][] o) {
@@ -58,5 +61,9 @@ public class QTableAgentState {
 
   public double[][] getqTable() {
     return qTable;
+  }
+
+  public int getState() {
+    return state;
   }
 }

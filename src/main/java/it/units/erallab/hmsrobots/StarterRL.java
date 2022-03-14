@@ -6,7 +6,7 @@ import it.units.erallab.hmsrobots.core.controllers.rl.DifferentialRewardFunction
 import it.units.erallab.hmsrobots.core.controllers.rl.RLListener;
 import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
-import it.units.erallab.hmsrobots.core.controllers.rl.discrete.QLearningAgent;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.ExpectedSARSAAgent;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.BinaryInputConverter;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.BinaryOutputConverter;
 import it.units.erallab.hmsrobots.core.objects.Robot;
@@ -15,6 +15,9 @@ import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
+import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
+import it.units.erallab.hmsrobots.viewers.NamedValue;
+import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
 import org.dyn4j.dynamics.Settings;
 
 import java.util.ArrayList;
@@ -50,17 +53,21 @@ public class StarterRL {
     String sensorConfig = "uniform-a+vxy-0";
     String rlSensorConfig = "uniform-a-0";
     int nClusters = 4;
-    double controllerStep = 0.5;
-    double learningRateDecay = 0.99;
-    double explorationRateDecay = 0.99;
+    double controllerStep = 0.25;
+    double learningRateDecay = 0.995;
+    double explorationRateDecay = 0.995;
     double discountFactor = 0.99;
     int seed = 5;
+
+    // Create the body
+    Grid<Voxel> body = RobotUtils.buildSensorizingFunction(sensorConfig)
+        .apply(RobotUtils.buildShape(shape));
 
     // Create the reward function
     ToDoubleFunction<Grid<Voxel>> rewardFunction = new DifferentialRewardFunction();
 
     // Initialize controller
-    ClusteredRLController rlController = new ClusteredRLController(shape, rlSensorConfig, null, rewardFunction);
+    ClusteredRLController rlController = new ClusteredRLController(body, rlSensorConfig, null, rewardFunction);
 
     // Compute sensor readings dimension
     int sensorDimension = rlController.getReadingsDimension();
@@ -69,10 +76,10 @@ public class StarterRL {
     DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(nClusters * sensorDimension);
 
     // Create binary output converter
-    DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(nClusters);
+    DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(nClusters, 0.45);
 
     // Create Tabular Q-Learning agent
-    QLearningAgent rlAgentDiscrete = new QLearningAgent(
+    ExpectedSARSAAgent rlAgentDiscrete = new ExpectedSARSAAgent(
         learningRateDecay,
         explorationRateDecay,
         discountFactor,
@@ -85,15 +92,27 @@ public class StarterRL {
     ContinuousRL rlAgent = rlAgentDiscrete.with(binaryInputConverter, binaryOutputConverter);
     rlController.setRL(rlAgent);
 
-    // Create the body
-    Grid<Voxel> body = RobotUtils.buildSensorizingFunction(sensorConfig)
-        .apply(RobotUtils.buildShape(shape));
-
     // Create the RL controller and apply it to the body
     StepController stepController = new StepController(rlController, controllerStep);
     Robot robot = new Robot(stepController, SerializationUtils.clone(body));
 
-    Locomotion locomotion = new Locomotion(1000, Locomotion.createTerrain("flatWithStart-2"), new Settings());
-    locomotion.apply(robot, new RLListener());
+    double TERRAIN_BORDER_WIDTH = 10d;
+    double TERRAIN_BORDER_HEIGHT = 100d;
+    int TERRAIN_LENGTH = 100000;
+
+    double[][] terrain = new double[][]{
+        new double[]{0, TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH},
+        new double[]{TERRAIN_BORDER_HEIGHT, 5, 5, TERRAIN_BORDER_HEIGHT}
+    };
+
+    Locomotion locomotion = new Locomotion(15000, terrain, 1000, new Settings());
+    locomotion.apply(robot, null);
+
+    locomotion = new Locomotion(1000, terrain, 1000, new Settings());
+    GridOnlineViewer.run(
+        locomotion,
+        Grid.create(1, 1, new NamedValue<>("Clustered RL Controller", robot)),
+        Drawers::basicWithMiniWorldAndRL
+    );
   }
 }

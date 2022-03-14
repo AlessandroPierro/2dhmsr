@@ -11,6 +11,7 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
@@ -29,13 +30,12 @@ public class ClusteredRLController extends AbstractController implements Snapsho
   private Grid<Double> controlSignals;
 
   public ClusteredRLController(
-      String shape,
+      Grid<Voxel> body,
       String sensorConfig,
       ContinuousRL rl,
       ToDoubleFunction<Grid<Voxel>> rewardFunction
   ) {
-    Grid<Boolean> testShape = RobotUtils.buildShape(shape);
-    Set<Set<Grid.Key>> clustersSet = computeCardinalPoses(testShape);
+    Set<Set<Grid.Key>> clustersSet = computeCardinalPoses(Grid.create(body, Objects::nonNull));
     List<List<Grid.Key>> clusters = clustersSet.stream().map(s -> s.stream().toList()).toList();
     this.rl = rl;
     this.rewardFunction = rewardFunction;
