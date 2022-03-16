@@ -54,10 +54,10 @@ public class StarterRL {
     String rlSensorConfig = "uniform-a-0";
     int nClusters = 4;
     double controllerStep = 0.25;
-    double learningRateDecay = 0.995;
-    double explorationRateDecay = 0.995;
-    double discountFactor = 0.99;
-    int seed = 5;
+    double learningRateDecay = 0.5119;
+    double explorationRateDecay = 0.8521;
+    double discountFactor = 0.7333;
+    int seed = 15;
 
     // Create the body
     Grid<Voxel> body = RobotUtils.buildSensorizingFunction(sensorConfig)
