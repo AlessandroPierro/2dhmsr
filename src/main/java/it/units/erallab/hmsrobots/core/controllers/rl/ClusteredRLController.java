@@ -4,15 +4,15 @@ import it.units.erallab.hmsrobots.core.controllers.AbstractController;
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
 import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
+import it.units.erallab.hmsrobots.core.sensors.Sensor;
 import it.units.erallab.hmsrobots.core.snapshots.RLControllerState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.function.DoubleBinaryOperator;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 
@@ -30,16 +30,14 @@ public class ClusteredRLController extends AbstractController implements Snapsho
   private Grid<Double> controlSignals;
 
   public ClusteredRLController(
-      Grid<Voxel> body,
-      String sensorConfig,
+      List<List<Grid.Key>> clusters,
+      LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, DoubleBinaryOperator>> map,
       ContinuousRL rl,
       ToDoubleFunction<Grid<Voxel>> rewardFunction
   ) {
-    Set<Set<Grid.Key>> clustersSet = computeCardinalPoses(Grid.create(body, Objects::nonNull));
-    List<List<Grid.Key>> clusters = clustersSet.stream().map(s -> s.stream().toList()).toList();
     this.rl = rl;
     this.rewardFunction = rewardFunction;
-    this.observationFunction = new ClusteredObservationFunction(clusters, sensorConfig);
+    this.observationFunction = new ClusteredObservationFunction(map);
     this.controlFunction = new ClusteredControlFunction(clusters);
   }
 
@@ -47,15 +45,20 @@ public class ClusteredRLController extends AbstractController implements Snapsho
   public Grid<Double> computeControlSignals(
       double t, Grid<Voxel> voxels
   ) {
+    System.out.println("Computing control signals...");
     reward = rewardFunction.applyAsDouble(voxels);
+    System.out.println("Reward: " + reward);
     observation = observationFunction.apply(t, voxels);
+    System.out.println("Observation: " + Arrays.toString(observation));
     action = rl.apply(t, observation, reward);
+    System.out.println("Action: " + Arrays.toString(action));
     controlSignals = controlFunction.apply(action);
+    System.out.println("Control signals: " + controlSignals);
     return controlSignals;
   }
 
   public int getReadingsDimension() {
-    return observationFunction.getnSensorReadings();
+    return observationFunction.getOutputDimension();
   }
 
   @Override

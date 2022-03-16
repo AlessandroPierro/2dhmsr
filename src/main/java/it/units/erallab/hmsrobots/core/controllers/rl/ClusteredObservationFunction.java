@@ -17,9 +17,9 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
 
   private final int nClusters;
   private final int nSensorReadings;
-  private final LinkedHashMap<List<Grid.Key>, Map<Class<? extends Sensor>, DoubleBinaryOperator>> map;
+  private final LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, DoubleBinaryOperator>> map;
 
-  public ClusteredObservationFunction(LinkedHashMap<List<Grid.Key>, Map<Class<? extends Sensor>, DoubleBinaryOperator>> map) {
+  public ClusteredObservationFunction(LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, DoubleBinaryOperator>> map) {
     this.map = map;
     this.nClusters = map.size();
     this.nSensorReadings = map.values().stream().mapToInt(Map::size).sum();
@@ -30,9 +30,11 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
   public double[] apply(
       Double t, Grid<Voxel> voxels
   ) {
+    // TODO : solve the problem related to the reduction (e.g. average is not computed correctly)
     double[] observations = new double[nSensorReadings];
+    Arrays.fill(observations, 0d);
     int counter = 0;
-    for (Map.Entry<List<Grid.Key>, Map<Class<? extends Sensor>, DoubleBinaryOperator>> entry : map.entrySet()) {
+    for (Map.Entry<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, DoubleBinaryOperator>> entry : map.entrySet()) {
       List<Grid.Key> cluster = entry.getKey();
       Map<Class<? extends Sensor>, DoubleBinaryOperator> sensorMap = entry.getValue();
       for (Map.Entry<Class<? extends Sensor>, DoubleBinaryOperator> sensorEntry : sensorMap.entrySet()) {
@@ -42,14 +44,14 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
               .stream()
               .filter(s -> (s instanceof CompositeSensor cs ? cs.getInnermostSensor() : s).getClass()
                   .isAssignableFrom(sensorEntry.getKey())).toList();
-          observations[counter] = sensors.stream()
+          observations[counter] = sensorEntry.getValue().applyAsDouble(sensors.stream()
               .flatMapToDouble(s -> DoubleStream.of(Arrays.stream(s.getReadings())
                   .reduce(sensorEntry.getValue())
                   .orElse(0d)))
               .reduce(sensorEntry.getValue())
-              .orElse(0.0);
-          counter++;
+              .orElse(0.0), observations[counter]);
         }
+        counter++;
       }
     }
     return observations;
