@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, double[]> {
@@ -31,7 +31,7 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
     this.nSensorReadings = sensorFilter.getReadingsDimension();
   }
 
-  private static class SensorsFilter implements Function<Sensor, Boolean> {
+  private static class SensorsFilter implements Predicate<Sensor> {
 
     private final int readingsDimension;
     Set<String> sensorsType;
@@ -55,16 +55,15 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
           .sum();
     }
 
-    @Override
-    public Boolean apply(Sensor sensor) {
+    public int getReadingsDimension() {
+      return readingsDimension;
+    }
+
+    public boolean test(Sensor sensor) {
       // TODO : check if this is the correct way to do this
       sensor = CompositeSensor.class.isAssignableFrom(sensor.getClass()) ?
           ((CompositeSensor) sensor).getInnermostSensor() : sensor;
       return sensorsType.contains(sensor.getClass().getName());
-    }
-
-    public int getReadingsDimension() {
-      return readingsDimension;
     }
   }
 
@@ -80,9 +79,10 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
       for (Grid.Key key : cluster) {
         Voxel voxel = voxels.get(key.x(), key.y());
         double[] temp = new double[nSensorReadings];
+        Arrays.fill(temp, 0d);
         int k = 0;
         for (Sensor sensor : voxel.getSensors()) {
-          if (sensorFilter.apply(sensor)) {
+          if (sensorFilter.test(sensor)) {
             for (double x : sensor.getReadings()) {
               // TODO : find a better way to normalize the readings
               temp[k] = k == 0 ? x / cluster.size() : Math.max(x, temp[k]);
