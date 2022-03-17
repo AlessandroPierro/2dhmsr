@@ -15,11 +15,13 @@ import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
-import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
+import it.units.erallab.hmsrobots.viewers.GridFileWriter;
 import it.units.erallab.hmsrobots.viewers.NamedValue;
+import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
 import org.dyn4j.dynamics.Settings;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -30,7 +32,8 @@ public class StarterRL {
 
   public static void main(String[] args) {
     int nExperiments = Integer.parseInt(args[0]);
-    ExecutorService executor = Executors.newFixedThreadPool(10);
+    int nExecutors = Integer.parseInt(args[1]);
+    ExecutorService executor = Executors.newFixedThreadPool(nExecutors);
     List<Callable<Integer>> callables = new ArrayList<>(nExperiments);
     callables.addAll(IntStream.range(1, nExperiments + 1).mapToObj(id -> (Callable<Integer>) () -> {
       runExperiment(args, Integer.toString(id));
@@ -50,14 +53,14 @@ public class StarterRL {
 
     // Configs
     String shape = "biped-4x3";
-    String sensorConfig = "uniform-a+vxy-0";
+    String sensorConfig = "uniform-a-0";
     String rlSensorConfig = "uniform-a-0";
     int nClusters = 4;
     double controllerStep = 0.25;
     double learningRateDecay = 0.5119;
     double explorationRateDecay = 0.8521;
     double discountFactor = 0.7333;
-    int seed = 15;
+    int seed = Integer.parseInt(id);
 
     // Create the body
     Grid<Voxel> body = RobotUtils.buildSensorizingFunction(sensorConfig)
@@ -105,14 +108,23 @@ public class StarterRL {
         new double[]{TERRAIN_BORDER_HEIGHT, 5, 5, TERRAIN_BORDER_HEIGHT}
     };
 
-    Locomotion locomotion = new Locomotion(15000, terrain, 1000, new Settings());
-    locomotion.apply(robot, null);
+    Locomotion locomotion = new Locomotion(10000, terrain, 50000, new Settings());
+    RLListener rlListener = new RLListener(10);
+    locomotion.apply(robot, rlListener);
+    rlListener.toFile(new File("log-" + id + ".txt"));
 
-    locomotion = new Locomotion(1000, terrain, 1000, new Settings());
-    GridOnlineViewer.run(
+    locomotion = new Locomotion(60, terrain, 1000, new Settings());
+    GridFileWriter.save(
         locomotion,
-        Grid.create(1, 1, new NamedValue<>("Clustered RL Controller", robot)),
+        Grid.create(1, 1, new NamedValue<>("ExpectedSARSA - seed : " + seed, robot)),
+        640,
+        320,
+        0,
+        20,
+        VideoUtils.EncoderFacility.JCODEC,
+        new File("test_ExpectedSARSA_" + id + ".mp4"),
         Drawers::basicWithMiniWorldAndRL
     );
+
   }
 }

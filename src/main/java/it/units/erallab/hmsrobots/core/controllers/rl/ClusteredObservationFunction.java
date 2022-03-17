@@ -85,7 +85,7 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
           if (sensorFilter.test(sensor)) {
             for (double x : sensor.getReadings()) {
               // TODO : find a better way to normalize the readings
-              temp[k] = k == 0 ? x / cluster.size() : Math.max(x, temp[k]);
+              temp[k] = x / cluster.size();
               k++;
             }
           }
