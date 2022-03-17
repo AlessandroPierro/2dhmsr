@@ -24,7 +24,6 @@ import org.dyn4j.dynamics.Settings;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.DoubleBinaryOperator;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.IntStream;
 
@@ -69,12 +68,14 @@ public class StarterRL {
     List<List<Grid.Key>> clusters = clustersSet.stream().map(s -> s.stream().toList()).toList();
 
     // Create the sensor mapping for the observation function
-    LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, DoubleBinaryOperator>> map = new LinkedHashMap<>();
+    LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map = new LinkedHashMap<>();
     for (List<Grid.Key> cluster : clusters) {
-      LinkedHashMap<Class<? extends Sensor>, DoubleBinaryOperator> sensorMapping = new LinkedHashMap<>();
-      //sensorMapping.put(AreaRatio.class, (a, b) -> (a + b) / 2);
-      sensorMapping.put(AreaRatio.class, Math::max);
-      sensorMapping.put(Touch.class, Math::max);
+      LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>> sensorMapping = new LinkedHashMap<>();
+      ToDoubleFunction<double[]> mean = value ->
+        value.length == 0 ? 0d: Arrays.stream(value).sum() / value.length;
+      ToDoubleFunction<double[]> max = value -> Arrays.stream(value).max().orElse(0d);
+      sensorMapping.put(AreaRatio.class, mean);
+      sensorMapping.put(Touch.class, max);
       map.put(cluster, sensorMapping);
     }
 

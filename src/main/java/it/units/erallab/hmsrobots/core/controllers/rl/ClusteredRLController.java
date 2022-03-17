@@ -31,7 +31,7 @@ public class ClusteredRLController extends AbstractController implements Snapsho
 
   public ClusteredRLController(
       List<List<Grid.Key>> clusters,
-      LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, DoubleBinaryOperator>> map,
+      LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map,
       ContinuousRL rl,
       ToDoubleFunction<Grid<Voxel>> rewardFunction
   ) {
