@@ -3,6 +3,7 @@ package it.units.erallab.hmsrobots;
 import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredRLController;
 import it.units.erallab.hmsrobots.core.controllers.rl.DifferentialRewardFunction;
+import it.units.erallab.hmsrobots.core.controllers.rl.RLListener;
 import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.ExpectedSARSAAgent;
@@ -124,10 +125,14 @@ public class StarterRL {
         new double[]{TERRAIN_BORDER_HEIGHT, 5, 5, TERRAIN_BORDER_HEIGHT}
     };
 
-    Locomotion locomotion = new Locomotion(10, terrain, 1000, new Settings());
-    locomotion.apply(robot, null);
+    Locomotion locomotion = new Locomotion(10000, terrain, 25000, new Settings());
+    RLListener listener = new RLListener(10);
+    locomotion.apply(robot, listener);
+    File file = new File("log_" + id + ".csv");
+    listener.toFile(file);
 
-    locomotion = new Locomotion(6, terrain, 1000, new Settings());
+    locomotion = new Locomotion(60, terrain, 25000, new Settings());
+
     GridFileWriter.save(
         locomotion,
         Grid.create(1, 1, new NamedValue<>("ExpectedSARSA - seed : " + seed, robot)),
