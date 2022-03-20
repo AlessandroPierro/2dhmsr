@@ -1,5 +1,6 @@
 package it.units.erallab.hmsrobots;
 
+import it.units.erallab.hmsrobots.core.controllers.SmoothedController;
 import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredRLController;
 import it.units.erallab.hmsrobots.core.controllers.rl.DifferentialRewardFunction;
@@ -18,6 +19,7 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 import it.units.erallab.hmsrobots.viewers.GridFileWriter;
+import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
 import it.units.erallab.hmsrobots.viewers.NamedValue;
 import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
@@ -125,11 +127,14 @@ public class StarterRL {
         new double[]{TERRAIN_BORDER_HEIGHT, 5, 5, TERRAIN_BORDER_HEIGHT}
     };
 
-    Locomotion locomotion = new Locomotion(10000, terrain, 25000, new Settings());
+
+    Locomotion locomotion = new Locomotion(7000, terrain, 25000, new Settings());
     RLListener listener = new RLListener(10);
-    locomotion.apply(robot, listener);
+    locomotion.apply(robot, null);
+
     File file = new File("log_" + id + ".csv");
     listener.toFile(file);
+
 
     locomotion = new Locomotion(60, terrain, 25000, new Settings());
 
@@ -142,6 +147,24 @@ public class StarterRL {
         20,
         VideoUtils.EncoderFacility.JCODEC,
         new File("test_ExpectedSARSA_" + id + ".mp4"),
+        Drawers::basicWithMiniWorldAndRL
+    );
+
+
+    SmoothedController smoothedController = new SmoothedController(stepController, 2.5);
+    robot = new Robot(smoothedController, SerializationUtils.clone(body));
+
+    locomotion = new Locomotion(60, terrain, 25000, new Settings());
+
+    GridFileWriter.save(
+        locomotion,
+        Grid.create(1, 1, new NamedValue<>("ExpectedSARSA - seed : " + seed, robot)),
+        640,
+        320,
+        0,
+        20,
+        VideoUtils.EncoderFacility.JCODEC,
+        new File("test_ExpectedSARSA_" + id + "_smoothed.mp4"),
         Drawers::basicWithMiniWorldAndRL
     );
   }
