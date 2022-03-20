@@ -3,7 +3,6 @@ package it.units.erallab.hmsrobots;
 import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredRLController;
 import it.units.erallab.hmsrobots.core.controllers.rl.DifferentialRewardFunction;
-import it.units.erallab.hmsrobots.core.controllers.rl.RLListener;
 import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.ExpectedSARSAAgent;
@@ -11,6 +10,9 @@ import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.Binary
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.BinaryOutputConverter;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
+import it.units.erallab.hmsrobots.core.sensors.AreaRatio;
+import it.units.erallab.hmsrobots.core.sensors.Sensor;
+import it.units.erallab.hmsrobots.core.sensors.Touch;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
@@ -24,9 +26,12 @@ import org.dyn4j.dynamics.Settings;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.IntStream;
+
+import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
 
 public class StarterRL {
 
@@ -53,7 +58,7 @@ public class StarterRL {
 
     // Configs
     String shape = "biped-4x3";
-    String sensorConfig = "uniform-a-0";
+    String sensorConfig = "uniform-a+vxy-0";
     String rlSensorConfig = "uniform-a-0";
     int nClusters = 4;
     double controllerStep = 0.25;
@@ -62,21 +67,36 @@ public class StarterRL {
     double discountFactor = 0.7333;
     int seed = Integer.parseInt(id);
 
-    // Create the body
+    // Create the body and the clusters
     Grid<Voxel> body = RobotUtils.buildSensorizingFunction(sensorConfig)
         .apply(RobotUtils.buildShape(shape));
+    Set<Set<Grid.Key>> clustersSet = computeCardinalPoses(Grid.create(body, Objects::nonNull));
+    List<List<Grid.Key>> clusters = clustersSet.stream().map(s -> s.stream().toList()).toList();
+
+    // Create the sensor mapping for the observation function
+    LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map = new LinkedHashMap<>();
+    for (List<Grid.Key> cluster : clusters) {
+      LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>> sensorMapping = new LinkedHashMap<>();
+      ToDoubleFunction<double[]> mean = value ->
+        value.length == 0 ? 0d: Arrays.stream(value).sum() / value.length;
+      ToDoubleFunction<double[]> max = value -> Arrays.stream(value).max().orElse(0d);
+      sensorMapping.put(AreaRatio.class, mean);
+      sensorMapping.put(Touch.class, max);
+      map.put(cluster, sensorMapping);
+    }
 
     // Create the reward function
     ToDoubleFunction<Grid<Voxel>> rewardFunction = new DifferentialRewardFunction();
+    int stateSpaceDimension = (int) Math.pow(2, map.values().stream().map(LinkedHashMap::size).reduce(0, Integer::sum));
 
     // Initialize controller
-    ClusteredRLController rlController = new ClusteredRLController(body, rlSensorConfig, null, rewardFunction);
+    ClusteredRLController rlController = new ClusteredRLController(clusters, map, null, rewardFunction);
 
     // Compute sensor readings dimension
     int sensorDimension = rlController.getReadingsDimension();
 
     // Create binary input converter
-    DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(nClusters * sensorDimension);
+    DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(8);
 
     // Create binary output converter
     DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(nClusters, 0.45);
@@ -87,7 +107,7 @@ public class StarterRL {
         explorationRateDecay,
         discountFactor,
         seed,
-        (int) Math.pow(2, sensorDimension * nClusters),
+        stateSpaceDimension,
         (int) Math.pow(2, nClusters)
     );
 
@@ -108,10 +128,8 @@ public class StarterRL {
         new double[]{TERRAIN_BORDER_HEIGHT, 5, 5, TERRAIN_BORDER_HEIGHT}
     };
 
-    Locomotion locomotion = new Locomotion(10000, terrain, 50000, new Settings());
-    RLListener rlListener = new RLListener(10);
-    locomotion.apply(robot, rlListener);
-    rlListener.toFile(new File("log-" + id + ".txt"));
+    Locomotion locomotion = new Locomotion(15000, terrain, 1000, new Settings());
+    locomotion.apply(robot, null);
 
     locomotion = new Locomotion(60, terrain, 1000, new Settings());
     GridFileWriter.save(
@@ -125,6 +143,5 @@ public class StarterRL {
         new File("test_ExpectedSARSA_" + id + ".mp4"),
         Drawers::basicWithMiniWorldAndRL
     );
-
   }
 }

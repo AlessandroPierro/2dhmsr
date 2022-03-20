@@ -4,106 +4,62 @@ import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.CompositeSensor;
 import it.units.erallab.hmsrobots.core.sensors.Sensor;
 import it.units.erallab.hmsrobots.util.Grid;
-import it.units.erallab.hmsrobots.util.RobotUtils;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.function.ToDoubleFunction;
 
 public class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, double[]> {
 
-  private final List<List<Grid.Key>> clusters;
-  private final SensorsFilter sensorFilter;
-
   private final int nClusters;
   private final int nSensorReadings;
+  private final LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map;
 
-  public ClusteredObservationFunction(
-      List<List<Grid.Key>> clusters, String sensorConfig
-  ) {
-    this.clusters = clusters;
-    this.sensorFilter = new SensorsFilter(sensorConfig);
-    this.nClusters = clusters.size();
-    this.nSensorReadings = sensorFilter.getReadingsDimension();
+  public ClusteredObservationFunction(LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map) {
+    this.map = map;
+    this.nClusters = map.size();
+    this.nSensorReadings = map.values().stream().mapToInt(Map::size).sum();
   }
 
-  private static class SensorsFilter implements Predicate<Sensor> {
-
-    private final int readingsDimension;
-    Set<String> sensorsType;
-
-    SensorsFilter(String config) {
-      // TODO Future : generalize to the case of non-uniform sensing
-      Grid<Voxel> testBody = RobotUtils.buildSensorizingFunction(config).apply(RobotUtils.buildShape("box-1x1"));
-      this.sensorsType = testBody.get(0, 0)
-          .getSensors()
-          .stream()
-          .filter(Objects::nonNull)
-          .map(s -> CompositeSensor.class.isAssignableFrom(s.getClass()) ?
-              ((CompositeSensor) s).getInnermostSensor() : s)
-          .map(s -> s.getClass().getName())
-          .collect(Collectors.toSet());
-      this.readingsDimension = testBody.get(0, 0)
-          .getSensors()
-          .stream()
-          .filter(Objects::nonNull)
-          .mapToInt(s -> s.getDomains().length)
-          .sum();
-    }
-
-    public int getReadingsDimension() {
-      return readingsDimension;
-    }
-
-    public boolean test(Sensor sensor) {
-      // TODO : check if this is the correct way to do this
-      sensor = CompositeSensor.class.isAssignableFrom(sensor.getClass()) ?
-          ((CompositeSensor) sensor).getInnermostSensor() : sensor;
-      return sensorsType.contains(sensor.getClass().getName());
-    }
-  }
 
   @Override
   public double[] apply(
       Double t, Grid<Voxel> voxels
   ) {
-    double[] observation = new double[nClusters * nSensorReadings];
-    Arrays.fill(observation, 0d);
-
-    for (int i = 0; i < nClusters; i++) {
-      List<Grid.Key> cluster = clusters.get(i);
-      for (Grid.Key key : cluster) {
-        Voxel voxel = voxels.get(key.x(), key.y());
-        double[] temp = new double[nSensorReadings];
-        Arrays.fill(temp, 0d);
-        int k = 0;
-        for (Sensor sensor : voxel.getSensors()) {
-          if (sensorFilter.test(sensor)) {
-            for (double x : sensor.getReadings()) {
-              // TODO : find a better way to normalize the readings
-              temp[k] = x / cluster.size();
-              k++;
-            }
-          }
+    // TODO : Clean up
+    double[] observations = new double[nSensorReadings];
+    Arrays.fill(observations, 0d);
+    int counter = 0;
+    for (Map.Entry<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> entry : map.entrySet()) {
+      List<Grid.Key> cluster = entry.getKey();
+      Map<Class<? extends Sensor>, ToDoubleFunction<double[]>> sensorMap = entry.getValue();
+      for (Map.Entry<Class<? extends Sensor>, ToDoubleFunction<double[]>> sensorEntry : sensorMap.entrySet()) {
+        double[] temp = new double[cluster.size()];
+        for (int i = 0; i < cluster.size(); i++) {
+          Grid.Key key = cluster.get(i);
+          List<Sensor> sensors = voxels.get(key.x(), key.y())
+              .getSensors()
+              .stream()
+              .filter(s -> (s instanceof CompositeSensor cs ? cs.getInnermostSensor() : s).getClass()
+                  .isAssignableFrom(sensorEntry.getKey())).toList();
+          temp[i] = sensorEntry.getValue()
+              .applyAsDouble(sensors.stream().mapToDouble(s -> s.getReadings()[0]).toArray());
         }
-        for (int j = 0; j < nSensorReadings; j++) {
-          observation[i * nSensorReadings + j] += temp[j];
-        }
+        observations[counter] = sensorEntry.getValue().applyAsDouble(temp);
+        counter++;
       }
     }
-
-    return observation;
+    return observations;
   }
 
   public int getOutputDimension() {
-    return nClusters * nSensorReadings;
+    return nSensorReadings;
   }
 
-  public int getnSensorReadings() {
-    return nSensorReadings;
+  public int getnClusters() {
+    return nClusters;
   }
 }
