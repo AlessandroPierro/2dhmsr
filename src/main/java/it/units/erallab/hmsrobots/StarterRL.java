@@ -12,7 +12,6 @@ import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.AreaRatio;
 import it.units.erallab.hmsrobots.core.sensors.Sensor;
-import it.units.erallab.hmsrobots.core.sensors.Touch;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
@@ -24,8 +23,6 @@ import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
 import org.dyn4j.dynamics.Settings;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.ToDoubleFunction;
@@ -51,6 +48,8 @@ public class StarterRL {
     } catch (ExecutionException | InterruptedException e) {
       e.printStackTrace();
     }
+
+    System.exit(0);
   }
 
 
@@ -78,25 +77,22 @@ public class StarterRL {
     for (List<Grid.Key> cluster : clusters) {
       LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>> sensorMapping = new LinkedHashMap<>();
       ToDoubleFunction<double[]> mean = value ->
-        value.length == 0 ? 0d: Arrays.stream(value).sum() / value.length;
-      ToDoubleFunction<double[]> max = value -> Arrays.stream(value).max().orElse(0d);
+          value.length == 0 ? 0d : Arrays.stream(value).sum() / value.length;
+      //ToDoubleFunction<double[]> max = value -> Arrays.stream(value).max().orElse(0d);
       sensorMapping.put(AreaRatio.class, mean);
-      sensorMapping.put(Touch.class, max);
+      //sensorMapping.put(Touch.class, max);
       map.put(cluster, sensorMapping);
     }
 
     // Create the reward function
     ToDoubleFunction<Grid<Voxel>> rewardFunction = new DifferentialRewardFunction();
-    int stateSpaceDimension = (int) Math.pow(2, map.values().stream().map(LinkedHashMap::size).reduce(0, Integer::sum));
+    int stateSpaceDimension = (int) Math.pow(2, map.values().stream().mapToInt(LinkedHashMap::size).sum());
 
     // Initialize controller
     ClusteredRLController rlController = new ClusteredRLController(clusters, map, null, rewardFunction);
 
-    // Compute sensor readings dimension
-    int sensorDimension = rlController.getReadingsDimension();
-
     // Create binary input converter
-    DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(8);
+    DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(4);
 
     // Create binary output converter
     DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(nClusters, 0.45);
@@ -128,10 +124,10 @@ public class StarterRL {
         new double[]{TERRAIN_BORDER_HEIGHT, 5, 5, TERRAIN_BORDER_HEIGHT}
     };
 
-    Locomotion locomotion = new Locomotion(15000, terrain, 1000, new Settings());
+    Locomotion locomotion = new Locomotion(10, terrain, 1000, new Settings());
     locomotion.apply(robot, null);
 
-    locomotion = new Locomotion(60, terrain, 1000, new Settings());
+    locomotion = new Locomotion(6, terrain, 1000, new Settings());
     GridFileWriter.save(
         locomotion,
         Grid.create(1, 1, new NamedValue<>("ExpectedSARSA - seed : " + seed, robot)),
