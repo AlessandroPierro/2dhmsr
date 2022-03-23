@@ -8,7 +8,6 @@ public class QTableAgentState {
   private final int statesNumber;
   private final int actionsNumber;
   private final double learningRateDecay;
-  private final double explorationRateDecay;
   private final double discountFactor;
   private final int state;
 
@@ -18,7 +17,6 @@ public class QTableAgentState {
       int statesNumber,
       int actionsNumber,
       double learningRateDecay,
-      double explorationRateDecay,
       double discountFactor,
       int state
   ) {
@@ -26,7 +24,6 @@ public class QTableAgentState {
     this.statesNumber = statesNumber;
     this.actionsNumber = actionsNumber;
     this.learningRateDecay = learningRateDecay;
-    this.explorationRateDecay = explorationRateDecay;
     this.discountFactor = discountFactor;
     this.state = state;
   }
@@ -45,10 +42,6 @@ public class QTableAgentState {
 
   public double getDiscountFactor() {
     return discountFactor;
-  }
-
-  public double getExplorationRateDecay() {
-    return explorationRateDecay;
   }
 
   public double getLearningRateDecay() {

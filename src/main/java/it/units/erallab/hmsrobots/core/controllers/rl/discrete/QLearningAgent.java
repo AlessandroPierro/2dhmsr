@@ -6,7 +6,6 @@ public class QLearningAgent extends AbstractQTableAgent {
 
   public QLearningAgent(
       double learningRateDecay,
-      double explorationRateDecay,
       double discountFactor,
       int seed,
       int stateSpaceDimension,
@@ -14,7 +13,6 @@ public class QLearningAgent extends AbstractQTableAgent {
   ) {
     super(
         learningRateDecay,
-        explorationRateDecay,
         discountFactor,
         seed,
         stateSpaceDimension,
@@ -24,29 +22,23 @@ public class QLearningAgent extends AbstractQTableAgent {
 
   public QLearningAgent(
       @JsonProperty("learningRateDecay") double learningRateDecay,
-      @JsonProperty("explorationRateDecay") double explorationRateDecay,
       @JsonProperty("discountFactor") double discountFactor,
       @JsonProperty("qTable") double[][] qTable,
       @JsonProperty("seed") int seed,
       @JsonProperty("stateSpaceDimension") int stateSpaceDimension,
       @JsonProperty("actionSpaceDimension") int actionSpaceDimension,
       @JsonProperty("nLearningVisits") int[] nLearningVisits,
-      @JsonProperty("nExplorationVisits") int[] nExplorationVisits,
-      @JsonProperty("learningRates") double[] learningRates,
-      @JsonProperty("explorationRates") double[] explorationRates
+      @JsonProperty("learningRates") double[] learningRates
   ) {
     super(
         learningRateDecay,
-        explorationRateDecay,
         discountFactor,
         qTable,
         seed,
         stateSpaceDimension,
         actionSpaceDimension,
         nLearningVisits,
-        nExplorationVisits,
-        learningRates,
-        explorationRates
+        learningRates
     );
   }
 

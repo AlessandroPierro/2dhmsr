@@ -1,13 +1,12 @@
 package it.units.erallab.hmsrobots;
 
-import it.units.erallab.hmsrobots.core.controllers.SmoothedController;
 import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredRLController;
-import it.units.erallab.hmsrobots.core.controllers.rl.DifferentialRewardFunction;
+import it.units.erallab.hmsrobots.core.controllers.rl.VelocityRewardFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.RLListener;
 import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
-import it.units.erallab.hmsrobots.core.controllers.rl.discrete.ExpectedSARSAAgent;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.QLearningAgent;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.BinaryInputConverter;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.BinaryOutputConverter;
 import it.units.erallab.hmsrobots.core.objects.Robot;
@@ -18,10 +17,8 @@ import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
-import it.units.erallab.hmsrobots.viewers.GridFileWriter;
 import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
 import it.units.erallab.hmsrobots.viewers.NamedValue;
-import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
 import org.dyn4j.dynamics.Settings;
 
@@ -60,13 +57,11 @@ public class StarterRL {
 
     // Configs
     String shape = "biped-4x3";
-    String sensorConfig = "uniform-a+vxy-0";
-    String rlSensorConfig = "uniform-a-0";
+    String sensorConfig = "uniform-a+t+vxy-0";
     int nClusters = 4;
-    double controllerStep = 0.25;
     double learningRateDecay = 0.5119;
-    double explorationRateDecay = 0.8521;
     double discountFactor = 0.7333;
+    double controllerStep = 0.2;
     int seed = Integer.parseInt(id);
 
     // Create the body and the clusters
@@ -88,7 +83,7 @@ public class StarterRL {
     }
 
     // Create the reward function
-    ToDoubleFunction<Grid<Voxel>> rewardFunction = new DifferentialRewardFunction();
+    ToDoubleFunction<Grid<Voxel>> rewardFunction = new VelocityRewardFunction();
     int stateSpaceDimension = (int) Math.pow(2, map.values().stream().mapToInt(LinkedHashMap::size).sum());
 
     // Initialize controller
@@ -98,12 +93,11 @@ public class StarterRL {
     DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(4);
 
     // Create binary output converter
-    DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(nClusters, 0.45);
+    DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(nClusters, 0.4);
 
     // Create Tabular Q-Learning agent
-    ExpectedSARSAAgent rlAgentDiscrete = new ExpectedSARSAAgent(
+    QLearningAgent rlAgentDiscrete = new QLearningAgent(
         learningRateDecay,
-        explorationRateDecay,
         discountFactor,
         seed,
         stateSpaceDimension,
@@ -128,44 +122,15 @@ public class StarterRL {
     };
 
 
-    Locomotion locomotion = new Locomotion(7000, terrain, 25000, new Settings());
+    Locomotion locomotion = new Locomotion(2500, terrain, 25000, new Settings());
     RLListener listener = new RLListener(10);
-    locomotion.apply(robot, null);
+    locomotion.apply(robot, listener);
 
     File file = new File("log_" + id + ".csv");
     listener.toFile(file);
 
-
     locomotion = new Locomotion(60, terrain, 25000, new Settings());
 
-    GridFileWriter.save(
-        locomotion,
-        Grid.create(1, 1, new NamedValue<>("ExpectedSARSA - seed : " + seed, robot)),
-        640,
-        320,
-        0,
-        20,
-        VideoUtils.EncoderFacility.JCODEC,
-        new File("test_ExpectedSARSA_" + id + ".mp4"),
-        Drawers::basicWithMiniWorldAndRL
-    );
-
-
-    SmoothedController smoothedController = new SmoothedController(stepController, 2.5);
-    robot = new Robot(smoothedController, SerializationUtils.clone(body));
-
-    locomotion = new Locomotion(60, terrain, 25000, new Settings());
-
-    GridFileWriter.save(
-        locomotion,
-        Grid.create(1, 1, new NamedValue<>("ExpectedSARSA - seed : " + seed, robot)),
-        640,
-        320,
-        0,
-        20,
-        VideoUtils.EncoderFacility.JCODEC,
-        new File("test_ExpectedSARSA_" + id + "_smoothed.mp4"),
-        Drawers::basicWithMiniWorldAndRL
-    );
+    GridOnlineViewer.run(locomotion, Grid.create(1, 1, new NamedValue<>("", robot)), Drawers::basicWithMiniWorldAndRL);
   }
 }

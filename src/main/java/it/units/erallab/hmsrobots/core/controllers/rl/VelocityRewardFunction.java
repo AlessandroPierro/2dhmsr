@@ -7,9 +7,7 @@ import it.units.erallab.hmsrobots.util.Grid;
 import java.util.Objects;
 import java.util.function.ToDoubleFunction;
 
-public class DifferentialRewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettable {
-
-  private double previousVelocity = 0d;
+public class VelocityRewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettable {
 
   @Override
   public double applyAsDouble(Grid<Voxel> voxels) {
@@ -19,14 +17,11 @@ public class DifferentialRewardFunction implements ToDoubleFunction<Grid<Voxel>>
         .mapToDouble(s -> s.getLinearVelocity().x()).sum();
     currentVelocity /= voxels.count(Objects::nonNull);
 
-    double currentReward = currentVelocity - previousVelocity;
-    previousVelocity = currentVelocity;
-
     return currentVelocity;
   }
 
   @Override
   public void reset() {
-    previousVelocity = 0d;
+    // nothing to do
   }
 }
