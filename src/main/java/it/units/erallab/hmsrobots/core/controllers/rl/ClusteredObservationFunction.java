@@ -33,24 +33,35 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
     double[] observations = new double[nSensorReadings];
     Arrays.fill(observations, 0d);
     int counter = 0;
+
     for (Map.Entry<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> entry : map.entrySet()) {
+
       List<Grid.Key> cluster = entry.getKey();
       Map<Class<? extends Sensor>, ToDoubleFunction<double[]>> sensorMap = entry.getValue();
+
       for (Map.Entry<Class<? extends Sensor>, ToDoubleFunction<double[]>> sensorEntry : sensorMap.entrySet()) {
+
+        Class<? extends Sensor> sensorType = sensorEntry.getKey();
+        ToDoubleFunction<double[]> aggregationFunction = sensorEntry.getValue();
+
         double[] temp = new double[cluster.size()];
+
         for (int i = 0; i < cluster.size(); i++) {
           Grid.Key key = cluster.get(i);
           List<Sensor> sensors = voxels.get(key.x(), key.y())
               .getSensors()
               .stream()
               .filter(s -> (s instanceof CompositeSensor cs ? cs.getInnermostSensor() : s).getClass()
-                  .isAssignableFrom(sensorEntry.getKey())).toList();
-          temp[i] = sensorEntry.getValue()
+                  .isAssignableFrom(sensorType)).toList();
+          temp[i] = aggregationFunction
               .applyAsDouble(sensors.stream().mapToDouble(s -> s.getReadings()[0]).toArray());
         }
-        observations[counter] = sensorEntry.getValue().applyAsDouble(temp);
+
+        observations[counter] = aggregationFunction.applyAsDouble(temp);
         counter++;
+
       }
+
     }
     return observations;
   }

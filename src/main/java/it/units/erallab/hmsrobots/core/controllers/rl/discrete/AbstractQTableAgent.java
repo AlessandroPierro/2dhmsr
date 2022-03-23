@@ -60,7 +60,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
 
     for (int i = 0; i < stateSpaceDimension; i++) {
       for (int j = 0; j < actionSpaceDimension; j++) {
-        qTableA[i][j] = 4;
+        qTableA[i][j] = 0d;
       }
     }
 
