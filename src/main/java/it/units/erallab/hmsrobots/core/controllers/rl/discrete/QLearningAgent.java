@@ -8,6 +8,8 @@ public class QLearningAgent extends AbstractQTableAgent {
       double learningRateDecay,
       double discountFactor,
       int seed,
+      double mean,
+      double interval,
       int stateSpaceDimension,
       int actionSpaceDimension
   ) {
@@ -18,6 +20,12 @@ public class QLearningAgent extends AbstractQTableAgent {
         stateSpaceDimension,
         actionSpaceDimension
     );
+
+    for (int i = 0; i < stateSpaceDimension; i++) {
+      for (int j = 0; j < actionSpaceDimension; j++) {
+        qTableA[i][j] = random.nextDouble() * interval + mean - interval / 2;
+      }
+    }
   }
 
   public QLearningAgent(

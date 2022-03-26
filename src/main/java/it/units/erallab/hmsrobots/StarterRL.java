@@ -2,8 +2,8 @@ package it.units.erallab.hmsrobots;
 
 import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredRLController;
-import it.units.erallab.hmsrobots.core.controllers.rl.VelocityRewardFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.RLListener;
+import it.units.erallab.hmsrobots.core.controllers.rl.VelocityRewardFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.QLearningAgent;
@@ -13,16 +13,15 @@ import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.AreaRatio;
 import it.units.erallab.hmsrobots.core.sensors.Sensor;
+import it.units.erallab.hmsrobots.core.sensors.Touch;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
-import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
-import it.units.erallab.hmsrobots.viewers.NamedValue;
-import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
 import org.dyn4j.dynamics.Settings;
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.ToDoubleFunction;
@@ -33,14 +32,50 @@ import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses
 public class StarterRL {
 
   public static void main(String[] args) {
-    int nExperiments = Integer.parseInt(args[0]);
-    int nExecutors = Integer.parseInt(args[1]);
-    ExecutorService executor = Executors.newFixedThreadPool(nExecutors);
-    List<Callable<Integer>> callables = new ArrayList<>(nExperiments);
-    callables.addAll(IntStream.range(1, nExperiments + 1).mapToObj(id -> (Callable<Integer>) () -> {
-      runExperiment(args, Integer.toString(id));
-      return id;
+    ExecutorService executor = Executors.newFixedThreadPool(12);
+    List<Callable<Integer>> callables = new ArrayList<>();
+
+    callables.addAll(IntStream.range(1, 11).mapToObj(seed -> (Callable<Integer>) () -> {
+      runExperiment(seed, "worm-5x2", true, false, 0, 2d);
+      return seed;
     }).toList());
+
+    callables.addAll(IntStream.range(1, 11).mapToObj(seed -> (Callable<Integer>) () -> {
+      runExperiment(seed, "worm-5x2", false, true, 0, 2d);
+      return seed;
+    }).toList());
+
+    callables.addAll(IntStream.range(1, 11).mapToObj(seed -> (Callable<Integer>) () -> {
+      runExperiment(seed, "biped-4x3", true, false, 0, 2d);
+      return seed;
+    }).toList());
+
+    callables.addAll(IntStream.range(1, 11).mapToObj(seed -> (Callable<Integer>) () -> {
+      runExperiment(seed, "biped-4x3", false, true, 0, 2d);
+      return seed;
+    }).toList());
+
+    callables.add(() -> {
+      runExperiment(0, "biped-4x3", true, false, 0, 0d);
+      return 0;
+    });
+
+    callables.add(() -> {
+      runExperiment(0, "biped-4x3", false, true, 0, 0d);
+      return 0;
+    });
+
+    callables.add(() -> {
+      runExperiment(0, "worm-5x2", true, false, 0, 0d);
+      return 0;
+    });
+
+    callables.add(() -> {
+      runExperiment(0, "worm-5x2", false, true, 0, 0d);
+      return 0;
+    });
+
+    // Execute experiments
     try {
       for (Future<Integer> future : executor.invokeAll(callables)) {
         future.get();
@@ -49,24 +84,21 @@ public class StarterRL {
       e.printStackTrace();
     }
 
-    System.exit(0);
+    executor.shutdownNow();
   }
 
 
-  public static void runExperiment(String[] args, String id) {
+  public static void runExperiment(int seed, String shape, boolean touch, boolean area, double mean, double interval) {
 
     // Configs
-    String shape = "biped-4x3";
     String sensorConfig = "uniform-a+t+vxy-0";
     int nClusters = 4;
-    double learningRateDecay = 0.5119;
-    double discountFactor = 0.7333;
-    double controllerStep = 0.2;
-    int seed = Integer.parseInt(id);
+    double learningRateDecay = 0.55;
+    double discountFactor = 0.75;
+    double controllerStep = 0.4;
 
     // Create the body and the clusters
-    Grid<Voxel> body = RobotUtils.buildSensorizingFunction(sensorConfig)
-        .apply(RobotUtils.buildShape(shape));
+    Grid<Voxel> body = RobotUtils.buildSensorizingFunction(sensorConfig).apply(RobotUtils.buildShape(shape));
     Set<Set<Grid.Key>> clustersSet = computeCardinalPoses(Grid.create(body, Objects::nonNull));
     List<List<Grid.Key>> clusters = clustersSet.stream().map(s -> s.stream().toList()).toList();
 
@@ -74,11 +106,12 @@ public class StarterRL {
     LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map = new LinkedHashMap<>();
     for (List<Grid.Key> cluster : clusters) {
       LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>> sensorMapping = new LinkedHashMap<>();
-      ToDoubleFunction<double[]> mean = value ->
-          value.length == 0 ? 0d : Arrays.stream(value).sum() / value.length;
-      //ToDoubleFunction<double[]> max = value -> Arrays.stream(value).max().orElse(0d);
-      sensorMapping.put(AreaRatio.class, mean);
-      //sensorMapping.put(Touch.class, max);
+      ToDoubleFunction<double[]> meanOp = value -> value.length == 0 ? 0d : Arrays.stream(value).sum() / value.length;
+      ToDoubleFunction<double[]> max = value -> Arrays.stream(value).max().orElse(0d);
+      if (area)
+        sensorMapping.put(AreaRatio.class, meanOp);
+      if (touch)
+        sensorMapping.put(Touch.class, max);
       map.put(cluster, sensorMapping);
     }
 
@@ -93,13 +126,15 @@ public class StarterRL {
     DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(4);
 
     // Create binary output converter
-    DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(nClusters, 0.4);
+    DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(nClusters, 0.5);
 
     // Create Tabular Q-Learning agent
     QLearningAgent rlAgentDiscrete = new QLearningAgent(
         learningRateDecay,
         discountFactor,
         seed,
+        mean,
+        interval,
         stateSpaceDimension,
         (int) Math.pow(2, nClusters)
     );
@@ -116,21 +151,14 @@ public class StarterRL {
     double TERRAIN_BORDER_HEIGHT = 100d;
     int TERRAIN_LENGTH = 100000;
 
-    double[][] terrain = new double[][]{
-        new double[]{0, TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH},
-        new double[]{TERRAIN_BORDER_HEIGHT, 5, 5, TERRAIN_BORDER_HEIGHT}
-    };
+    double[][] terrain = new double[][]{new double[]{0, TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH}, new double[]{TERRAIN_BORDER_HEIGHT, 5, 5, TERRAIN_BORDER_HEIGHT}};
 
-
-    Locomotion locomotion = new Locomotion(2500, terrain, 25000, new Settings());
-    RLListener listener = new RLListener(10);
+    Locomotion locomotion = new Locomotion(2000, terrain, 25000, new Settings());
+    RLListener listener = new RLListener();
     locomotion.apply(robot, listener);
 
-    File file = new File("log_" + id + ".csv");
+    File file = new File(shape + "-" + (touch ? "t" : "") + (area ? "a" : "") + "-" + seed + "-meanQ=" + new DecimalFormat(
+        "#.0#").format(mean) + "-intervalQ=" + new DecimalFormat("#.0#").format(interval) + ".csv");
     listener.toFile(file);
-
-    locomotion = new Locomotion(60, terrain, 25000, new Settings());
-
-    GridOnlineViewer.run(locomotion, Grid.create(1, 1, new NamedValue<>("", robot)), Drawers::basicWithMiniWorldAndRL);
   }
 }

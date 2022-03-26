@@ -17,12 +17,10 @@ import java.util.regex.Pattern;
 public class RLListener implements SnapshotListener {
 
   private final List<RLEvent> history;
-  private final int stepSize;
-  private int step = 0;
+  private double t0 = 0d;
 
-  public RLListener(int stepSize) {
+  public RLListener() {
     this.history = new ArrayList<>();
-    this.stepSize = stepSize;
   }
 
   record RLEvent(double time, double reward, double[] observation, double[] action) {
@@ -84,7 +82,7 @@ public class RLListener implements SnapshotListener {
 
   @Override
   public void listen(double t, Snapshot snapshot) {
-    if (step % stepSize == 0) {
+    if (t - t0 >= 0.1) {
       RLControllerState controllerState = extractControllerState(snapshot);
       //QTableAgentState rlState = extractAgentState(snapshot);
       RLEvent event = new RLEvent(
@@ -94,20 +92,19 @@ public class RLListener implements SnapshotListener {
           controllerState.getAction()
       );
       history.add(event);
+      t0 = t;
     }
-    step = (step + 1) % stepSize;
   }
 
   public void toFile(File file) {
     List<String> lines = history.stream()
-        .map(event -> String.format("%f;%f;%s;%s", event.time, event.reward, Arrays.toString(event.observation),
-            Arrays.toString(event.action)
-        ))
+        .map(event -> String.format("%f;%f", event.time, event.reward))
+        .map(s -> s.replace(",", "."))
         .toList();
     file = check(file);
     try {
       FileWriter fileWriter = new FileWriter(file);
-      fileWriter.write("time;reward;observation;action" + System.lineSeparator());
+      fileWriter.write("time;reward" + System.lineSeparator());
       for (String line : lines) {
         fileWriter.write(line + System.lineSeparator());
       }

@@ -80,7 +80,11 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
       @JsonProperty("learningRates") double[] learningRates
   ) {
     this(learningRateDecay, discountFactor, seed, stateSpaceDimension, actionSpaceDimension);
-    this.qTableA = Arrays.copyOf(qTable, qTable.length);
+    for (int i = 0; i < stateSpaceDimension; i++) {
+      for (int j = 0; j < actionSpaceDimension; j++) {
+        qTable[i][j] = 0d;
+      }
+    }
     this.nLearningVisits = Arrays.copyOf(nLearningVisits, nLearningVisits.length);
     this.learningRates = Arrays.copyOf(learningRates, learningRates.length);
   }
@@ -148,7 +152,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
     int ucbBestAction = 0;
     double ucbBestValue = Double.NEGATIVE_INFINITY;
     for (int i = 0; i < actionSpaceDimension; i++) {
-      double currentValue = this.qTableA[state][i] + 4d * Math.sqrt(Math.log(t) / ucbVisits[state][i]);
+      double currentValue = this.qTableA[state][i] + 3d * Math.sqrt(Math.log(t) / ucbVisits[state][i]);
       if (currentValue > ucbBestValue) {
         ucbBestAction = i;
         ucbBestValue = currentValue;
