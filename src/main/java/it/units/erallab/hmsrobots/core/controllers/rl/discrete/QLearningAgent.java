@@ -7,6 +7,7 @@ public class QLearningAgent extends AbstractQTableAgent {
   public QLearningAgent(
       double learningRateDecay,
       double discountFactor,
+      double c,
       int seed,
       double mean,
       double interval,
@@ -16,6 +17,7 @@ public class QLearningAgent extends AbstractQTableAgent {
     super(
         learningRateDecay,
         discountFactor,
+        c,
         seed,
         stateSpaceDimension,
         actionSpaceDimension

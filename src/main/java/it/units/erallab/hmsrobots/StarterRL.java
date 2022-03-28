@@ -32,46 +32,47 @@ import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses
 public class StarterRL {
 
   public static void main(String[] args) {
-    ExecutorService executor = Executors.newFixedThreadPool(12);
+    ExecutorService executor = Executors.newFixedThreadPool(24);
     List<Callable<Integer>> callables = new ArrayList<>();
+    double controllerStep = Double.parseDouble(args[0]);
 
     callables.addAll(IntStream.range(1, 11).mapToObj(seed -> (Callable<Integer>) () -> {
-      runExperiment(seed, "worm-5x2", true, false, 0, 2d);
+      runExperiment(seed, "worm-5x2", true, false, 0, 2d, controllerStep);
       return seed;
     }).toList());
 
     callables.addAll(IntStream.range(1, 11).mapToObj(seed -> (Callable<Integer>) () -> {
-      runExperiment(seed, "worm-5x2", false, true, 0, 2d);
+      runExperiment(seed, "worm-5x2", false, true, 0, 2d, controllerStep);
       return seed;
     }).toList());
 
     callables.addAll(IntStream.range(1, 11).mapToObj(seed -> (Callable<Integer>) () -> {
-      runExperiment(seed, "biped-4x3", true, false, 0, 2d);
+      runExperiment(seed, "biped-4x3", true, false, 0, 2d, controllerStep);
       return seed;
     }).toList());
 
     callables.addAll(IntStream.range(1, 11).mapToObj(seed -> (Callable<Integer>) () -> {
-      runExperiment(seed, "biped-4x3", false, true, 0, 2d);
+      runExperiment(seed, "biped-4x3", false, true, 0, 2d, controllerStep);
       return seed;
     }).toList());
 
     callables.add(() -> {
-      runExperiment(0, "biped-4x3", true, false, 0, 0d);
+      runExperiment(0, "biped-4x3", true, false, 0, 0d, controllerStep);
       return 0;
     });
 
     callables.add(() -> {
-      runExperiment(0, "biped-4x3", false, true, 0, 0d);
+      runExperiment(0, "biped-4x3", false, true, 0, 0d, controllerStep);
       return 0;
     });
 
     callables.add(() -> {
-      runExperiment(0, "worm-5x2", true, false, 0, 0d);
+      runExperiment(0, "worm-5x2", true, false, 0, 0d, controllerStep);
       return 0;
     });
 
     callables.add(() -> {
-      runExperiment(0, "worm-5x2", false, true, 0, 0d);
+      runExperiment(0, "worm-5x2", false, true, 0, 0d, controllerStep);
       return 0;
     });
 
@@ -88,14 +89,16 @@ public class StarterRL {
   }
 
 
-  public static void runExperiment(int seed, String shape, boolean touch, boolean area, double mean, double interval) {
+  public static void runExperiment(
+      int seed, String shape, boolean touch, boolean area, double mean, double interval, double controllerStep
+  ) {
 
     // Configs
     String sensorConfig = "uniform-a+t+vxy-0";
     int nClusters = 4;
-    double learningRateDecay = 0.55;
-    double discountFactor = 0.75;
-    double controllerStep = 0.4;
+    double learningRateDecay = 0.8794;
+    double c = 1.29;
+    double discountFactor = 0.32;
 
     // Create the body and the clusters
     Grid<Voxel> body = RobotUtils.buildSensorizingFunction(sensorConfig).apply(RobotUtils.buildShape(shape));
@@ -129,9 +132,9 @@ public class StarterRL {
     DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(nClusters, 0.5);
 
     // Create Tabular Q-Learning agent
-    QLearningAgent rlAgentDiscrete = new QLearningAgent(
-        learningRateDecay,
+    QLearningAgent rlAgentDiscrete = new QLearningAgent(learningRateDecay,
         discountFactor,
+        c,
         seed,
         mean,
         interval,
@@ -153,12 +156,13 @@ public class StarterRL {
 
     double[][] terrain = new double[][]{new double[]{0, TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH}, new double[]{TERRAIN_BORDER_HEIGHT, 5, 5, TERRAIN_BORDER_HEIGHT}};
 
-    Locomotion locomotion = new Locomotion(2000, terrain, 25000, new Settings());
+    Locomotion locomotion = new Locomotion(5000, terrain, 25000, new Settings());
     RLListener listener = new RLListener();
     locomotion.apply(robot, listener);
 
     File file = new File(shape + "-" + (touch ? "t" : "") + (area ? "a" : "") + "-" + seed + "-meanQ=" + new DecimalFormat(
-        "#.0#").format(mean) + "-intervalQ=" + new DecimalFormat("#.0#").format(interval) + ".csv");
+        "#.0#").format(mean) + "-intervalQ=" + new DecimalFormat("#.0#").format(interval) + "-freq=" + new DecimalFormat(
+        "#.0d#").format(controllerStep) + ".csv");
     listener.toFile(file);
   }
 }

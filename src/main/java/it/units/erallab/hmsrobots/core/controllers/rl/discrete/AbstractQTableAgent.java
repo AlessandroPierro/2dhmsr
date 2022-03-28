@@ -23,7 +23,6 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   private final int seed;
   @JsonProperty
   protected double[][] qTableA;
-
   protected boolean learn = true;
   protected boolean explore = true;
   @JsonProperty
@@ -32,14 +31,15 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
   protected double[] learningRates;
   @JsonProperty
   protected int[][] ucbVisits;
-
   protected boolean initialized = false;
   protected int previousState;
   protected int action;
+  double c;
 
   public AbstractQTableAgent(
       double learningRateDecay,
       double discountFactor,
+      double c,
       int seed,
       int stateSpaceDimension,
       int actionSpaceDimension
@@ -66,6 +66,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
         ucbVisits[i][j] = 1;
       }
     }
+    this.c = c;
   }
 
 
@@ -79,7 +80,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
       @JsonProperty("nLearningVisits") int[] nLearningVisits,
       @JsonProperty("learningRates") double[] learningRates
   ) {
-    this(learningRateDecay, discountFactor, seed, stateSpaceDimension, actionSpaceDimension);
+    this(learningRateDecay, discountFactor, 4.0, seed, stateSpaceDimension, actionSpaceDimension);
     for (int i = 0; i < stateSpaceDimension; i++) {
       for (int j = 0; j < actionSpaceDimension; j++) {
         qTable[i][j] = 0d;
@@ -152,7 +153,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
     int ucbBestAction = 0;
     double ucbBestValue = Double.NEGATIVE_INFINITY;
     for (int i = 0; i < actionSpaceDimension; i++) {
-      double currentValue = this.qTableA[state][i] + 3d * Math.sqrt(Math.log(t) / ucbVisits[state][i]);
+      double currentValue = this.qTableA[state][i] + this.c * Math.sqrt(Math.log(t) / ucbVisits[state][i]);
       if (currentValue > ucbBestValue) {
         ucbBestAction = i;
         ucbBestValue = currentValue;
