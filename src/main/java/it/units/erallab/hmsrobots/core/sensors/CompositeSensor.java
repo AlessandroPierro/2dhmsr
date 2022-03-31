@@ -30,8 +30,7 @@ public abstract class CompositeSensor extends AbstractSensor {
   protected final Sensor sensor;
 
   public CompositeSensor(
-      DoubleRange[] domains,
-      Sensor sensor
+      DoubleRange[] domains, Sensor sensor
   ) {
     super(domains);
     this.sensor = sensor;
@@ -64,9 +63,7 @@ public abstract class CompositeSensor extends AbstractSensor {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{" +
-        "sensor=" + sensor +
-        '}';
+    return getClass().getSimpleName() + "{" + "sensor=" + sensor + '}';
   }
 
   public Sensor getInnermostSensor() {
@@ -76,10 +73,6 @@ public abstract class CompositeSensor extends AbstractSensor {
   public Sensor getSensor() {
     return sensor;
   }
-  
-  public Sensor getInnermostSensor() {
-    return CompositeSensor.class.isAssignableFrom(sensor.getClass()) ?
-        ((CompositeSensor) sensor).getInnermostSensor() : sensor;
-  }
+
 
 }

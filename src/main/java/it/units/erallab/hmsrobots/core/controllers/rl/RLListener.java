@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,7 +22,7 @@ public class RLListener implements SnapshotListener {
     this.history = new ArrayList<>();
   }
 
-  record RLEvent(double time, double reward, double[] observation, double[] action) {
+  record RLEvent(double time, double reward) {
   }
 
   private static File check(File file) {
@@ -82,14 +81,12 @@ public class RLListener implements SnapshotListener {
 
   @Override
   public void listen(double t, Snapshot snapshot) {
-    if (t - t0 >= 0.1) {
+    if (t - t0 >= 0.25) {
       RLControllerState controllerState = extractControllerState(snapshot);
       //QTableAgentState rlState = extractAgentState(snapshot);
       RLEvent event = new RLEvent(
           t,
-          controllerState.getReward(),
-          controllerState.getObservation(),
-          controllerState.getAction()
+          controllerState.getReward()
       );
       history.add(event);
       t0 = t;

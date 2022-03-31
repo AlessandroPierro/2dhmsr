@@ -1,5 +1,6 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.controllers.AbstractController;
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
 import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
@@ -9,25 +10,27 @@ import it.units.erallab.hmsrobots.core.snapshots.RLControllerState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import it.units.erallab.hmsrobots.util.Grid;
-import it.units.erallab.hmsrobots.util.RobotUtils;
 
-import java.util.*;
-import java.util.function.DoubleBinaryOperator;
+import java.io.Serializable;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 
-import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
+public class ClusteredRLController extends AbstractController implements Snapshottable, Serializable {
 
-public class ClusteredRLController extends AbstractController implements Snapshottable {
-
+  @JsonProperty
   private final ToDoubleFunction<Grid<Voxel>> rewardFunction;
+  @JsonProperty
   private final ClusteredObservationFunction observationFunction;
+  @JsonProperty
   private final Function<double[], Grid<Double>> controlFunction;
+  @JsonProperty
   private ContinuousRL rl;
+
   private double[] observation;
   private double reward;
   private double[] action;
-  private Grid<Double> controlSignals;
 
   public ClusteredRLController(
       List<List<Grid.Key>> clusters,
@@ -41,6 +44,18 @@ public class ClusteredRLController extends AbstractController implements Snapsho
     this.controlFunction = new ClusteredControlFunction(clusters);
   }
 
+  public ClusteredRLController(
+      @JsonProperty("rewardFunction") ToDoubleFunction<Grid<Voxel>> rewardFunction,
+      @JsonProperty("observationFunction") ClusteredObservationFunction observationFunction,
+      @JsonProperty("controlFunction") Function<double[], Grid<Double>> controlFunction,
+      @JsonProperty("rl") ContinuousRL rl
+  ) {
+    this.rewardFunction = rewardFunction;
+    this.observationFunction = observationFunction;
+    this.controlFunction = controlFunction;
+    this.rl = rl;
+  }
+
   @Override
   public Grid<Double> computeControlSignals(
       double t, Grid<Voxel> voxels
@@ -48,20 +63,12 @@ public class ClusteredRLController extends AbstractController implements Snapsho
     reward = rewardFunction.applyAsDouble(voxels);
     observation = observationFunction.apply(t, voxels);
     action = rl.apply(t, observation, reward);
-    controlSignals = controlFunction.apply(action);
-    return controlSignals;
-  }
-
-  public int getReadingsDimension() {
-    return observationFunction.getOutputDimension();
+    return controlFunction.apply(action);
   }
 
   @Override
   public Snapshot getSnapshot() {
-    Snapshot snapshot = new Snapshot(
-        new RLControllerState(reward, observation, action),
-        getClass()
-    );
+    Snapshot snapshot = new Snapshot(new RLControllerState(reward, observation, action), getClass());
     snapshot.getChildren().add(rl.getSnapshot());
     return snapshot;
   }

@@ -1,5 +1,6 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.CompositeSensor;
 import it.units.erallab.hmsrobots.core.sensors.Sensor;
@@ -16,9 +17,12 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
 
   private final int nClusters;
   private final int nSensorReadings;
+  @JsonProperty
   private final LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map;
 
-  public ClusteredObservationFunction(LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map) {
+  public ClusteredObservationFunction(
+      @JsonProperty("map") LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map
+  ) {
     this.map = map;
     this.nClusters = map.size();
     this.nSensorReadings = map.values().stream().mapToInt(Map::size).sum();
@@ -29,9 +33,10 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
   public double[] apply(
       Double t, Grid<Voxel> voxels
   ) {
-    // TODO : Clean up
+
     double[] observations = new double[nSensorReadings];
     Arrays.fill(observations, 0d);
+
     int counter = 0;
 
     for (Map.Entry<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> entry : map.entrySet()) {

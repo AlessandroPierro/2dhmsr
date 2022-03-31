@@ -1,172 +1,137 @@
 package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.snapshots.QTableAgentState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.random.RandomGenerator;
 
-public abstract class AbstractQTableAgent implements DiscreteRL, Serializable {
-  @JsonProperty
-  protected final double learningRateDecay;
-  @JsonProperty
+public abstract class AbstractQTableAgent implements DiscreteRL, Snapshottable {
   protected final double discountFactor;
-  @JsonProperty
-  protected final int stateSpaceDimension;
-  @JsonProperty
-  protected final int actionSpaceDimension;
+  protected final int stateDim;
+  protected final int actionDim;
   protected final RandomGenerator random;
-  @JsonProperty
-  private final int seed;
-  @JsonProperty
-  protected double[][] qTableA;
-  protected boolean learn = true;
-  protected boolean explore = true;
-  @JsonProperty
-  protected int[] nLearningVisits;
-  @JsonProperty
-  protected double[] learningRates;
-  @JsonProperty
-  protected int[][] ucbVisits;
-  protected boolean initialized = false;
+
+  protected double[][] qTable;
   protected int previousState;
-  protected int action;
-  double c;
+  protected int previousAction;
+
+  protected double epsilon;
+  protected double learningRate;
+
+  protected boolean learn = true;
+  protected int episodeNumber = 0;
 
   public AbstractQTableAgent(
-      double learningRateDecay,
       double discountFactor,
-      double c,
       int seed,
-      int stateSpaceDimension,
-      int actionSpaceDimension
+      int stateDim,
+      int actionDim
   ) {
-    this.learningRateDecay = learningRateDecay;
     this.discountFactor = discountFactor;
-    this.seed = seed;
     this.random = new Random(seed);
-    this.stateSpaceDimension = stateSpaceDimension;
-    this.actionSpaceDimension = actionSpaceDimension;
-    this.qTableA = new double[stateSpaceDimension][actionSpaceDimension];
-    for (int i = 0; i < stateSpaceDimension; i++) {
-      for (int j = 0; j < actionSpaceDimension; j++) {
-        qTableA[i][j] = 0;
-      }
-    }
-    nLearningVisits = new int[stateSpaceDimension];
-    Arrays.fill(nLearningVisits, 0);
-    learningRates = new double[stateSpaceDimension];
-    Arrays.fill(learningRates, 1d);
-    ucbVisits = new int[stateSpaceDimension][actionSpaceDimension];
-    for (int i = 0; i < stateSpaceDimension; i++) {
-      for (int j = 0; j < actionSpaceDimension; j++) {
-        ucbVisits[i][j] = 1;
-      }
-    }
-    this.c = c;
-  }
-
-
-  public AbstractQTableAgent(
-      @JsonProperty("learningRateDecay") double learningRateDecay,
-      @JsonProperty("discountFactor") double discountFactor,
-      @JsonProperty("qTable") double[][] qTable,
-      @JsonProperty("seed") int seed,
-      @JsonProperty("stateSpaceDimension") int stateSpaceDimension,
-      @JsonProperty("actionSpaceDimension") int actionSpaceDimension,
-      @JsonProperty("nLearningVisits") int[] nLearningVisits,
-      @JsonProperty("learningRates") double[] learningRates
-  ) {
-    this(learningRateDecay, discountFactor, 4.0, seed, stateSpaceDimension, actionSpaceDimension);
-    for (int i = 0; i < stateSpaceDimension; i++) {
-      for (int j = 0; j < actionSpaceDimension; j++) {
+    this.stateDim = stateDim;
+    this.actionDim = actionDim;
+    this.qTable = new double[stateDim][actionDim];
+    for (int i = 0; i < stateDim; i++) {
+      for (int j = 0; j < actionDim; j++) {
         qTable[i][j] = 0d;
       }
     }
-    this.nLearningVisits = Arrays.copyOf(nLearningVisits, nLearningVisits.length);
-    this.learningRates = Arrays.copyOf(learningRates, learningRates.length);
+  }
+
+  public AbstractQTableAgent(
+      double discountFactor,
+      int seed,
+      int stateDim,
+      int actionDim,
+      double[][] qTable
+  ) {
+    this(discountFactor, seed, stateDim, actionDim);
+    this.qTable = copy(qTable);
   }
 
   @Override
   public int apply(double t, int newState, double reward) {
-    if (initialized && learn) {
-      updateQTable(previousState, action, reward, newState, qTableA);
-      updateLearningRates(newState);
+    epsilon = explorationRateSchedule(t);
+    learningRate = learningRateSchedule(t);
+    int action = selectEpsGreedyAction(newState);
+    if (previousAction != Integer.MIN_VALUE && learn) {
+      updateQTable(newState, reward, action);
     }
-    initialized = true;
-    action = ucbActionSelection(t, newState);
-    ucbVisits[newState][action] += 1;
     previousState = newState;
+    previousAction = action;
     return action;
   }
 
+  private double explorationRateSchedule(double t) {
+    return 1d / (1d + episodeNumber);
+  }
+
+  private double learningRateSchedule(double t) {
+    return 1d / (1d + episodeNumber);
+  }
+
   public int getInputDimension() {
-    return stateSpaceDimension;
+    return stateDim;
   }
 
   public int getOutputDimension() {
-    return actionSpaceDimension;
+    return actionDim;
   }
 
-  protected int getMaxAction(int state, double[][] qTable) {
-    double maxQ = Double.NEGATIVE_INFINITY;
+  protected int getMaxAction(int state) {
     int maxAction = 0;
-    for (int action = 0; action < actionSpaceDimension; action++) {
-      if (qTable[state][action] > maxQ) {
-        maxQ = qTable[state][action];
-        maxAction = action;
-      }
+    for (int action = 1; action < actionDim; action++) {
+      maxAction = qTable[state][action] > qTable[state][maxAction] ? action : maxAction;
     }
     return maxAction;
   }
 
-  protected double getMaxQ(int state, double[][] qTable) {
-    double maxQ = Double.NEGATIVE_INFINITY;
-    for (int action = 0; action < actionSpaceDimension; action++) {
-      maxQ = Math.max(maxQ, qTable[state][action]);
-    }
-    return maxQ;
+  protected double getMaxQ(int state) {
+    return qTable[state][getMaxAction(state)];
   }
 
   @Override
   public Snapshot getSnapshot() {
     QTableAgentState content = new QTableAgentState(
-        qTableA,
-        stateSpaceDimension,
-        actionSpaceDimension,
-        learningRateDecay,
+        copy(qTable),
+        stateDim,
+        actionDim,
+        0d,
         discountFactor,
         previousState
     );
+
     return new Snapshot(content, this.getClass());
   }
 
   @Override
   public void reset() {
-    initialized = false;
+    previousAction = Integer.MIN_VALUE;
+    previousState = Integer.MIN_VALUE;
+    episodeNumber++;
   }
 
-  protected int ucbActionSelection(double t, int state) {
-    int ucbBestAction = 0;
-    double ucbBestValue = Double.NEGATIVE_INFINITY;
-    for (int i = 0; i < actionSpaceDimension; i++) {
-      double currentValue = this.qTableA[state][i] + this.c * Math.sqrt(Math.log(t) / ucbVisits[state][i]);
-      if (currentValue > ucbBestValue) {
-        ucbBestAction = i;
-        ucbBestValue = currentValue;
-      }
-    }
-    return ucbBestAction;
+  protected void updateQTable(int newState, double reward, int action) {
   }
 
-  protected void updateLearningRates(int newState) {
-    nLearningVisits[newState]++;
-    learningRates[newState] = 1 / Math.pow(nLearningVisits[newState], learningRateDecay);
+  protected double[][] copy(double[][] matrix) {
+    return Arrays.stream(matrix).map(double[]::clone).toArray(double[][]::new);
   }
 
-  protected void updateQTable(int previousState, int action, double reward, int newState, double[][] qTable) {
+  protected int selectEpsGreedyAction(int state) {
+    return random.nextDouble() < epsilon ? random.nextInt(actionDim) : getMaxAction(state);
   }
+
+  public void stopLearning() {
+    learn = false;
+  }
+
+  public void startLearning() {
+    learn = true;
+  }
+
 }

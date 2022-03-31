@@ -1,16 +1,21 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.controllers.IOSized;
 import it.units.erallab.hmsrobots.util.Grid;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.function.Function;
 
-public class ClusteredControlFunction implements Function<double[], Grid<Double>>, IOSized {
+public class ClusteredControlFunction implements Function<double[], Grid<Double>>, IOSized, Serializable {
+  @JsonProperty
   private final List<List<Grid.Key>> clusters;
   private final int nClusters;
   private final int nVoxels;
+  @JsonProperty
   private final int w;
+  @JsonProperty
   private final int h;
 
   public ClusteredControlFunction(List<List<Grid.Key>> clusters) {
@@ -23,6 +28,18 @@ public class ClusteredControlFunction implements Function<double[], Grid<Double>
     this.h = clusters.stream()
         .mapToInt(c -> c.stream().mapToInt(Grid.Key::y).max().orElse(0))
         .max().orElse(0) + 1;
+  }
+
+  public ClusteredControlFunction(
+      @JsonProperty("clusters") List<List<Grid.Key>> clusters,
+      @JsonProperty("w") int w,
+      @JsonProperty("h") int h
+  ) {
+    this.clusters = clusters;
+    this.nClusters = clusters.size();
+    this.nVoxels = clusters.stream().mapToInt(List::size).sum();
+    this.w = w;
+    this.h = h;
   }
 
   @Override
