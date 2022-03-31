@@ -38,14 +38,16 @@ public class SelfAttention implements Serializable, Parametrized, RealFunction, 
   private final double[][] k;
 
   @JsonCreator
-  public SelfAttention(@JsonProperty("dowstream") MultiLayerPerceptron downstream,
-                       @JsonProperty("n") int n,
-                       @JsonProperty("din") int din,
-                       @JsonProperty("dk") int dk,
-                       @JsonProperty("wq") double[][] wq,
-                       @JsonProperty("wk") double[][] wk,
-                       @JsonProperty("qbias") double[] qbias,
-                       @JsonProperty("kbias") double[] kbias) {
+  public SelfAttention(
+      @JsonProperty("dowstream") MultiLayerPerceptron downstream,
+      @JsonProperty("n") int n,
+      @JsonProperty("din") int din,
+      @JsonProperty("dk") int dk,
+      @JsonProperty("wq") double[][] wq,
+      @JsonProperty("wk") double[][] wk,
+      @JsonProperty("qbias") double[] qbias,
+      @JsonProperty("kbias") double[] kbias
+  ) {
     this.downstream = downstream;
     this.n = n;
     this.din = din;
@@ -68,14 +70,22 @@ public class SelfAttention implements Serializable, Parametrized, RealFunction, 
     return (din * dk) + dk + (din * dk) + dk;
   }
 
-  public int countAttentionParams() { return countAttentionParams(this.din, this.dk); }
+  public int countAttentionParams() {
+    return countAttentionParams(this.din, this.dk);
+  }
 
-  public double[] getAttentionParams() { return concat(flat(this.wq), flat(this.wk), this.qbias, this.kbias); }
+  public double[] getAttentionParams() {
+    return concat(flat(this.wq), flat(this.wk), this.qbias, this.kbias);
+  }
 
-  public double[] getDownstreamParams() { return this.downstream.getParams(); }
+  public double[] getDownstreamParams() {
+    return this.downstream.getParams();
+  }
 
   @Override
-  public double[] getParams() { return concat(this.getAttentionParams(), this.getDownstreamParams()); }
+  public double[] getParams() {
+    return concat(this.getAttentionParams(), this.getDownstreamParams());
+  }
 
   public void setAttentionParams(double[] params) {
     int s = 0;
@@ -92,7 +102,9 @@ public class SelfAttention implements Serializable, Parametrized, RealFunction, 
     System.arraycopy(params, s, this.kbias, 0, this.dk);
   }
 
-  public void setDownstreamParams(double[] params) { this.downstream.setParams(params); }
+  public void setDownstreamParams(double[] params) {
+    this.downstream.setParams(params);
+  }
 
   @Override
   public void setParams(double[] params) {

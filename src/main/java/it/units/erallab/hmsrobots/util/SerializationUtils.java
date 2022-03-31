@@ -132,7 +132,7 @@ public class SerializationUtils {
     try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); GZIPOutputStream gos = new GZIPOutputStream(
         baos,
         true
-    );) {
+    )) {
       gos.write(raw);
       gos.flush();
       gos.close();

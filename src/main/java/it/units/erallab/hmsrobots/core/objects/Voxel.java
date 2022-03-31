@@ -63,7 +63,10 @@ public class Voxel implements Actionable, Serializable, Snapshottable, WorldObje
   public static final double FRICTION = 10d;
   public static final double RESTITUTION = 0.1d;
   public static final double MASS = 1d;
-  public static final DoubleRange AREA_RATIO_PASSIVE_RANGE = DoubleRange.of(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+  public static final DoubleRange AREA_RATIO_PASSIVE_RANGE = DoubleRange.of(
+      Double.NEGATIVE_INFINITY,
+      Double.POSITIVE_INFINITY
+  );
   public static final DoubleRange AREA_RATIO_ACTIVE_RANGE = DoubleRange.of(0.8, 1.2);
   public static final EnumSet<SpringScaffolding> SPRING_SCAFFOLDINGS = EnumSet.allOf(SpringScaffolding.class);
   @JsonProperty

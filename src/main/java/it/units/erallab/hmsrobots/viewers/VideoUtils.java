@@ -90,7 +90,7 @@ public class VideoUtils {
       reader.close();
       int exitVal = process.waitFor();
       if (exitVal < 0) {
-        throw new IOException(String.format("Unexpected exit val: %d. Full output is:%n%s", exitVal, sb.toString()));
+        throw new IOException(String.format("Unexpected exit val: %d. Full output is:%n%s", exitVal, sb));
       }
     } catch (IOException | InterruptedException e) {
       throw (e instanceof IOException) ? (IOException) e : (new IOException(e));

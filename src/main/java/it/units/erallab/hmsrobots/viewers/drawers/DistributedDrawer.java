@@ -57,7 +57,8 @@ public class DistributedDrawer extends MemoryDrawer<DistributedSensingState> {
   }
 
   public DistributedDrawer(Extractor extractor, double windowT) {
-    this(extractor,
+    this(
+        extractor,
         windowT,
         Color.GREEN,
         Color.YELLOW,
@@ -67,7 +68,12 @@ public class DistributedDrawer extends MemoryDrawer<DistributedSensingState> {
   }
 
   @Override
-  protected void innerDraw(double t, Snapshot snapshot, SortedMap<Double, DistributedSensingState> memory, Graphics2D g) {
+  protected void innerDraw(
+      double t,
+      Snapshot snapshot,
+      SortedMap<Double, DistributedSensingState> memory,
+      Graphics2D g
+  ) {
     DistributedSensingState current = memory.get(memory.lastKey());
     double textWidth = g.getFontMetrics().charWidth('m');
     double legendWidth = 6 * textWidth;
