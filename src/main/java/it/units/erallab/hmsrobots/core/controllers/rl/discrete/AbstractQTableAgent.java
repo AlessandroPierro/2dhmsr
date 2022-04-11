@@ -26,30 +26,33 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Snapshottable {
 
   public AbstractQTableAgent(
       double discountFactor,
-      int seed,
       int stateDim,
-      int actionDim
+      int actionDim,
+      double meanQ,
+      double stdQ,
+      int seed
   ) {
     this.discountFactor = discountFactor;
     this.random = new Random(seed);
     this.stateDim = stateDim;
     this.actionDim = actionDim;
     this.qTable = new double[stateDim][actionDim];
+
     for (int i = 0; i < stateDim; i++) {
       for (int j = 0; j < actionDim; j++) {
-        qTable[i][j] = 0d;
+        qTable[i][j] = meanQ + random.nextGaussian() * stdQ;
       }
     }
   }
 
   public AbstractQTableAgent(
       double discountFactor,
-      int seed,
       int stateDim,
       int actionDim,
-      double[][] qTable
+      double[][] qTable,
+      int seed
   ) {
-    this(discountFactor, seed, stateDim, actionDim);
+    this(discountFactor, stateDim, actionDim, 0d, 0d, seed);
     this.qTable = copy(qTable);
   }
 

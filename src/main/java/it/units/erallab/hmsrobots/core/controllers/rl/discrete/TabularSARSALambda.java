@@ -8,9 +8,9 @@ public class TabularSARSALambda extends AbstractQTableAgent {
   private final double[][] eTraces;
 
   public TabularSARSALambda(
-      double discountFactor, double lambda, int seed, int stateDim, int actionDim
+      double discountFactor, double lambda, int stateDim, int actionDim, double meanQ, double stdQ, int seed
   ) {
-    super(discountFactor, seed, stateDim, actionDim);
+    super(discountFactor, stateDim, actionDim, meanQ, stdQ, seed);
     this.lambda = lambda;
     this.eTraces = new double[stateDim][actionDim];
     for (int i = 0; i < stateDim; i++) {

@@ -26,8 +26,8 @@ public class QTableAgentDrawer extends MemoryDrawer<QTableAgentState> {
   }
 
   private void drawHeatmap(double[][] qTable, BoundingBox bb, Graphics2D g) {
-    double min = Arrays.stream(qTable).flatMapToDouble(Arrays::stream).min().orElse(Double.NEGATIVE_INFINITY);
-    double max = Arrays.stream(qTable).flatMapToDouble(Arrays::stream).max().orElse(Double.POSITIVE_INFINITY);
+    double min = -2; // Arrays.stream(qTable).flatMapToDouble(Arrays::stream).min().orElse(Double.NEGATIVE_INFINITY);
+    double max = 2; // Arrays.stream(qTable).flatMapToDouble(Arrays::stream).max().orElse(Double.POSITIVE_INFINITY);
 
     int nStates = qTable.length;
     int nActions = qTable[0].length;

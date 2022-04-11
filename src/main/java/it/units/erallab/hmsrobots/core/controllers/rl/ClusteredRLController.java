@@ -12,8 +12,10 @@ import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import it.units.erallab.hmsrobots.util.Grid;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 
@@ -79,9 +81,5 @@ public class ClusteredRLController extends AbstractController implements Snapsho
     if (rewardFunction instanceof Resettable r) {
       r.reset();
     }
-  }
-
-  public void setRL(ContinuousRL rl) {
-    this.rl = rl;
   }
 }

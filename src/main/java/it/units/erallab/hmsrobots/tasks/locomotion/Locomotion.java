@@ -195,11 +195,13 @@ public class Locomotion extends AbstractTask<Robot, Outcome> {
     double t = 0d;
     while (t < finalT) {
       t = AbstractTask.updateWorld(t, settings.getStepFrequency(), world, worldObjects, listener);
-      observations.put(t, new Outcome.Observation(
-          Grid.create(robot.getVoxels(), v -> v == null ? null : v.getVoxelPoly()),
-          ground.yAt(robot.center().x()),
-          (double) stopWatch.getTime(TimeUnit.MILLISECONDS) / 1000d
-      ));
+      if ((int) t % 100 == 0) {
+        observations.put(t, new Outcome.Observation(
+            Grid.create(robot.getVoxels(), v -> v == null ? null : v.getVoxelPoly()),
+            ground.yAt(robot.center().x()),
+            (double) stopWatch.getTime(TimeUnit.MILLISECONDS) / 1000d
+        ));
+      }
     }
     stopWatch.stop();
     //prepare outcome

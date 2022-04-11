@@ -2,14 +2,8 @@ package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
 
 public class TabularQLearning extends AbstractQTableAgent {
 
-  public TabularQLearning(double discountFactor, int seed, int stateDim, int actionDim) {
-    super(discountFactor, seed, stateDim, actionDim);
-  }
-
-  public TabularQLearning(
-      double discountFactor, int seed, int stateDim, int actionDim, double[][] qTable
-  ) {
-    super(discountFactor, seed, stateDim, actionDim, qTable);
+  public TabularQLearning(double discountFactor, int stateDim, int actionDim, double meanQ, double stdQ, int seed) {
+    super(discountFactor, stateDim, actionDim, meanQ, stdQ, seed);
   }
 
   @Override

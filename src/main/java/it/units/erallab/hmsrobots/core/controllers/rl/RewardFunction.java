@@ -14,18 +14,17 @@ public class RewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettable
   public double applyAsDouble(Grid<Voxel> voxels) {
 
     if (previousPosition == Double.NEGATIVE_INFINITY) {
-      previousPosition = voxels.get(0, 2).center().x();
+      previousPosition = voxels.get(0, 0).center().x();
     }
 
     double rotation = voxels.get(0, 0).getAngle();
-    double currentPosition = voxels.get(0, 2).center().x();
+    double currentPosition = voxels.get(0, 0).center().x();
     double deltaPosition = currentPosition - previousPosition;
 
     double reward = rotation < -Math.PI / 2 || rotation > Math.PI / 2 ?
-        -100d : (deltaPosition < 0 ? -50d : 10 * deltaPosition);
+        -100d : (deltaPosition <= 0d ? -50d : 10 * deltaPosition);
 
     previousPosition = currentPosition;
-
     return reward;
   }
 

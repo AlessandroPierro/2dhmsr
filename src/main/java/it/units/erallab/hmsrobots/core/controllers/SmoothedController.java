@@ -20,9 +20,11 @@ package it.units.erallab.hmsrobots.core.controllers;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import it.units.erallab.hmsrobots.util.Grid;
 
-public class SmoothedController extends CompositeController {
+public class SmoothedController extends CompositeController implements Snapshottable {
 
   @JsonProperty
   private final double controlSignalSpeed;
@@ -64,6 +66,11 @@ public class SmoothedController extends CompositeController {
       }
       return currentControlSignals.get(x, y);
     });
+  }
+
+  @Override
+  public Snapshot getSnapshot() {
+    return this.getInnermostController() instanceof Snapshottable s ? s.getSnapshot() : null;
   }
 
   @Override
