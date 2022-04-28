@@ -138,7 +138,7 @@ public class StarterRL {
         StepController stepController = new StepController(rlController, controllerStep);
         Robot robot = new Robot(stepController, SerializationUtils.clone(body));
 
-        RLLocomotion rlLocomotion = new RLLocomotion(20000, 10, robot, false);
+        RLLocomotion rlLocomotion = new RLLocomotion(400, 1, robot, false);
         rlLocomotion.apply(rewardFunction);
     }
 

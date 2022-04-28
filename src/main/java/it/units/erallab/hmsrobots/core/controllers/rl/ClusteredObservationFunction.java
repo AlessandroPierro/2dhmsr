@@ -1,5 +1,6 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.*;
@@ -27,6 +28,7 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
     private final int nClusters;
     private final int nSensorReadings;
 
+    @JsonCreator
     public ClusteredObservationFunction(
             @JsonProperty("clusters") List<List<Grid.Key>> clusters,
             @JsonProperty("area") boolean area,
@@ -100,11 +102,11 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
         return observations;
     }
 
-  public int getOutputDimension() {
-    return nSensorReadings;
-  }
+    public int getOutputDimension() {
+        return nSensorReadings;
+    }
 
-  public int getnClusters() {
-    return nClusters;
-  }
+    public int getnClusters() {
+        return nClusters;
+    }
 }

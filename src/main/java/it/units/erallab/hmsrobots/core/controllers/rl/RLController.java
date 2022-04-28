@@ -1,5 +1,6 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.controllers.AbstractController;
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
@@ -45,6 +46,7 @@ public class RLController extends AbstractController implements Snapshottable, S
     this.controlFunction = new ClusteredControlFunction(clusters);
   }
 
+  @JsonCreator
   public RLController(
       @JsonProperty("rewardFunction") ToDoubleFunction<Grid<Voxel>> rewardFunction,
       @JsonProperty("observationFunction") ClusteredObservationFunction observationFunction,
