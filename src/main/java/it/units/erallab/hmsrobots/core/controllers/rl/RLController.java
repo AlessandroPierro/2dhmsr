@@ -12,17 +12,15 @@ import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import it.units.erallab.hmsrobots.util.Grid;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Random;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 
-public class ClusteredRLController extends AbstractController implements Snapshottable, Serializable {
+public class RLController extends AbstractController implements Snapshottable, Serializable {
 
   @JsonProperty
-  private final ToDoubleFunction<Grid<Voxel>> rewardFunction;
+  private ToDoubleFunction<Grid<Voxel>> rewardFunction;
   @JsonProperty
   private final ClusteredObservationFunction observationFunction;
   @JsonProperty
@@ -34,19 +32,20 @@ public class ClusteredRLController extends AbstractController implements Snapsho
   private double reward;
   private double[] action;
 
-  public ClusteredRLController(
+  public RLController(
       List<List<Grid.Key>> clusters,
-      LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map,
+      boolean useArea,
+      boolean useTouch,
       ContinuousRL rl,
       ToDoubleFunction<Grid<Voxel>> rewardFunction
   ) {
     this.rl = rl;
     this.rewardFunction = rewardFunction;
-    this.observationFunction = new ClusteredObservationFunction(map);
+    this.observationFunction = new ClusteredObservationFunction(clusters, useArea, useTouch);
     this.controlFunction = new ClusteredControlFunction(clusters);
   }
 
-  public ClusteredRLController(
+  public RLController(
       @JsonProperty("rewardFunction") ToDoubleFunction<Grid<Voxel>> rewardFunction,
       @JsonProperty("observationFunction") ClusteredObservationFunction observationFunction,
       @JsonProperty("controlFunction") Function<double[], Grid<Double>> controlFunction,
@@ -81,5 +80,17 @@ public class ClusteredRLController extends AbstractController implements Snapsho
     if (rewardFunction instanceof Resettable r) {
       r.reset();
     }
+  }
+
+  public void setRewardFunction(ToDoubleFunction<Grid<Voxel>> rewardFunction) {
+    this.rewardFunction = rewardFunction;
+  }
+
+  public void setRL(ContinuousRL rl) {
+    this.rl = rl;
+  }
+
+  public ContinuousRL getRL() {
+    return rl;
   }
 }

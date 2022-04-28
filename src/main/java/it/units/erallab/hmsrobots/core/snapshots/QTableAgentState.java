@@ -1,62 +1,57 @@
 package it.units.erallab.hmsrobots.core.snapshots;
 
-import java.util.Arrays;
-
 public class QTableAgentState {
 
-  private final double[][] qTable;
-  private final int statesNumber;
-  private final int actionsNumber;
-  private final double learningRateDecay;
-  private final double discountFactor;
-  private final int state;
+    private final double[][] qTable;
+    private final int stateDim;
+    private final int actionDim;
+    private final double learningRate;
+    private final double explorationRate;
+    private final int currentState;
+    private final int currentAction;
+    private final double currentReward;
 
 
-  public QTableAgentState(
-      double[][] qTable,
-      int statesNumber,
-      int actionsNumber,
-      double learningRateDecay,
-      double discountFactor,
-      int state
-  ) {
-    this.qTable = copyOf(qTable);
-    this.statesNumber = statesNumber;
-    this.actionsNumber = actionsNumber;
-    this.learningRateDecay = learningRateDecay;
-    this.discountFactor = discountFactor;
-    this.state = state;
-  }
-
-  private static double[][] copyOf(double[][] o) {
-    double[][] c = new double[o.length][];
-    for (int i = 0; i < o.length; i++) {
-      c[i] = Arrays.copyOf(o[i], o[i].length);
+    public QTableAgentState(double[][] qTable, int stateDim, int actionDim, double learningRate, double explorationRate, int currentState, int currentAction, double currentReward) {
+        this.qTable = qTable;
+        this.stateDim = stateDim;
+        this.actionDim = actionDim;
+        this.learningRate = learningRate;
+        this.explorationRate = explorationRate;
+        this.currentState = currentState;
+        this.currentAction = currentAction;
+        this.currentReward = currentReward;
     }
-    return c;
-  }
 
-  public int getActionsNumber() {
-    return actionsNumber;
-  }
+    public double[][] getqTable() {
+        return qTable;
+    }
 
-  public double getDiscountFactor() {
-    return discountFactor;
-  }
+    public int getStateDim() {
+        return stateDim;
+    }
 
-  public double getLearningRateDecay() {
-    return learningRateDecay;
-  }
+    public int getActionDim() {
+        return actionDim;
+    }
 
-  public int getStatesNumber() {
-    return statesNumber;
-  }
+    public double getLearningRate() {
+        return learningRate;
+    }
 
-  public double[][] getqTable() {
-    return qTable;
-  }
+    public double getExplorationRate() {
+        return explorationRate;
+    }
 
-  public int getState() {
-    return state;
-  }
+    public int getCurrentState() {
+        return currentState;
+    }
+
+    public int getCurrentAction() {
+        return currentAction;
+    }
+
+    public double getCurrentReward() {
+        return currentReward;
+    }
 }

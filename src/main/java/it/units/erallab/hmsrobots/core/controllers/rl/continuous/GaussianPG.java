@@ -78,17 +78,13 @@ public class GaussianPG implements ContinuousRL, Serializable {
     }
 
     @Override
-    public Snapshot getSnapshot() {
-        QTableAgentState content = new QTableAgentState(
-                new double[2][2],
-                stateDim,
-                actionDim,
-                0d,
-                discountFactor,
-                0
-        );
+    public void reinitialize() {
 
-        return new Snapshot(content, this.getClass());
+    }
+
+    @Override
+    public Snapshot getSnapshot() {
+        return null;
     }
 
     private void updateWeights() {

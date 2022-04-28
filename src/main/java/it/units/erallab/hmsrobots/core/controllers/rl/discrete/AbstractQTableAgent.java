@@ -3,138 +3,124 @@ package it.units.erallab.hmsrobots.core.controllers.rl.discrete;
 import it.units.erallab.hmsrobots.core.snapshots.QTableAgentState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
+import org.apache.commons.math3.linear.RealMatrix;
 
-import java.util.Arrays;
 import java.util.Random;
 import java.util.random.RandomGenerator;
 
+import static org.apache.commons.math3.linear.MatrixUtils.createRealMatrix;
+
 public abstract class AbstractQTableAgent implements DiscreteRL, Snapshottable {
-  protected final double discountFactor;
-  protected final int stateDim;
-  protected final int actionDim;
-  protected final RandomGenerator random;
+    protected final double discountFactor;
+    protected final int stateDim;
+    protected final int actionDim;
+    protected final RandomGenerator random;
+    protected final double meanQ;
+    protected final double stdQ;
 
-  protected double[][] qTable;
-  protected int previousState;
-  protected int previousAction;
+    protected RealMatrix qTable;
+    protected int previousState;
+    protected int previousAction;
+    protected double previousReward;
 
-  protected double epsilon;
-  protected double learningRate;
+    protected double epsilon;
+    protected double learningRate;
 
-  protected boolean learn = true;
-  protected int episodeNumber = 0;
+    // Internals
+    protected boolean learn = true;
+    protected int episodeNumber;
 
-  public AbstractQTableAgent(
-      double discountFactor,
-      int stateDim,
-      int actionDim,
-      double meanQ,
-      double stdQ,
-      int seed
-  ) {
-    this.discountFactor = discountFactor;
-    this.random = new Random(seed);
-    this.stateDim = stateDim;
-    this.actionDim = actionDim;
-    this.qTable = new double[stateDim][actionDim];
+    public AbstractQTableAgent(double discountFactor, int stateDim, int actionDim, double meanQ, double stdQ, int seed) {
+        this.discountFactor = discountFactor;
+        this.random = new Random(seed);
+        this.meanQ = meanQ;
+        this.stdQ = stdQ;
+        this.stateDim = stateDim;
+        this.actionDim = actionDim;
+        this.qTable = createRealMatrix(stateDim, actionDim);
 
-    for (int i = 0; i < stateDim; i++) {
-      for (int j = 0; j < actionDim; j++) {
-        qTable[i][j] = meanQ + random.nextGaussian() * stdQ;
-      }
+        for (int i = 0; i < stateDim; i++) {
+            for (int j = 0; j < actionDim; j++) {
+                qTable.setEntry(i, j, random.nextGaussian() * stdQ + meanQ);
+            }
+        }
+
+        this.episodeNumber = 0;
     }
-  }
 
-  public AbstractQTableAgent(
-      double discountFactor,
-      int stateDim,
-      int actionDim,
-      double[][] qTable,
-      int seed
-  ) {
-    this(discountFactor, stateDim, actionDim, 0d, 0d, seed);
-    this.qTable = copy(qTable);
-  }
-
-  @Override
-  public int apply(double t, int newState, double reward) {
-    epsilon = explorationRateSchedule(t);
-    learningRate = learningRateSchedule(t);
-    int action = selectEpsGreedyAction(newState);
-    if (previousAction != Integer.MIN_VALUE && learn) {
-      updateQTable(newState, reward, action);
+    @Override
+    public int apply(double t, int newState, double reward) {
+        epsilon = explorationRateSchedule(t);
+        learningRate = learningRateSchedule(t);
+        int action = selectEpsGreedyAction(newState);
+        if (previousAction != Integer.MIN_VALUE && learn) {
+            updateQTable(newState, reward, action);
+        }
+        previousState = newState;
+        previousAction = action;
+        previousReward = reward;
+        return action;
     }
-    previousState = newState;
-    previousAction = action;
-    return action;
-  }
 
-  private double explorationRateSchedule(double t) {
-    return 1d / (1d + episodeNumber);
-  }
-
-  private double learningRateSchedule(double t) {
-    return 1d / (1d + episodeNumber);
-  }
-
-  public int getInputDimension() {
-    return stateDim;
-  }
-
-  public int getOutputDimension() {
-    return actionDim;
-  }
-
-  protected int getMaxAction(int state) {
-    int maxAction = 0;
-    for (int action = 1; action < actionDim; action++) {
-      maxAction = qTable[state][action] > qTable[state][maxAction] ? action : maxAction;
+    private double explorationRateSchedule(double t) {
+        return 1d / (1d + episodeNumber);
     }
-    return maxAction;
-  }
 
-  protected double getMaxQ(int state) {
-    return qTable[state][getMaxAction(state)];
-  }
+    private double learningRateSchedule(double t) {
+        return 1d / (1d + episodeNumber);
+    }
 
-  @Override
-  public Snapshot getSnapshot() {
-    QTableAgentState content = new QTableAgentState(
-        copy(qTable),
-        stateDim,
-        actionDim,
-        0d,
-        discountFactor,
-        previousState
-    );
+    public int getInputDimension() {
+        return stateDim;
+    }
 
-    return new Snapshot(content, this.getClass());
-  }
+    public int getOutputDimension() {
+        return actionDim;
+    }
 
-  @Override
-  public void reset() {
-    previousAction = Integer.MIN_VALUE;
-    previousState = Integer.MIN_VALUE;
-    episodeNumber++;
-  }
+    protected int getMaxAction(int state) {
+        int maxAction = 0;
+        for (int action = 1; action < actionDim; action++) {
+            maxAction = qTable.getEntry(state, action) > qTable.getEntry(state, maxAction) ? action : maxAction;
+        }
+        return maxAction;
+    }
 
-  protected void updateQTable(int newState, double reward, int action) {
-  }
+    protected double getMaxQ(int state) {
+        return qTable.getEntry(state, getMaxAction(state));
+    }
 
-  protected double[][] copy(double[][] matrix) {
-    return Arrays.stream(matrix).map(double[]::clone).toArray(double[][]::new);
-  }
+    @Override
+    public Snapshot getSnapshot() {
+        QTableAgentState content = new QTableAgentState(qTable.getData(), stateDim, actionDim, learningRate, epsilon, previousState, previousAction, previousReward);
 
-  protected int selectEpsGreedyAction(int state) {
-    return random.nextDouble() < epsilon ? random.nextInt(actionDim) : getMaxAction(state);
-  }
+        return new Snapshot(content, this.getClass());
+    }
 
-  public void stopLearning() {
-    learn = false;
-  }
+    @Override
+    public void reset() {
+        previousAction = Integer.MIN_VALUE;
+        previousState = Integer.MIN_VALUE;
+        episodeNumber++;
+    }
 
-  public void startLearning() {
-    learn = true;
-  }
+    protected void updateQTable(int newState, double reward, int action) {
+    }
+
+    protected int selectEpsGreedyAction(int state) {
+        return random.nextDouble() < epsilon ? random.nextInt(actionDim) : getMaxAction(state);
+    }
+
+    @Override
+    public void reinitialize() {
+        episodeNumber = 0;
+        for (int i = 0; i < stateDim; i++) {
+            for (int j = 0; j < actionDim; j++) {
+                qTable.setEntry(i, j, random.nextGaussian() * stdQ + meanQ);
+            }
+        }
+        previousAction = Integer.MIN_VALUE;
+        previousState = Integer.MIN_VALUE;
+    }
 
 }

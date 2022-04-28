@@ -8,28 +8,27 @@ import java.util.function.ToDoubleFunction;
 
 public class RewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettable {
 
-  private double previousPosition = Double.NEGATIVE_INFINITY;
+    private double previousPosition = Double.NEGATIVE_INFINITY;
 
-  @Override
-  public double applyAsDouble(Grid<Voxel> voxels) {
+    @Override
+    public double applyAsDouble(Grid<Voxel> voxels) {
 
-    if (previousPosition == Double.NEGATIVE_INFINITY) {
-      previousPosition = voxels.get(0, 0).center().x();
+        if (previousPosition == Double.NEGATIVE_INFINITY) {
+            previousPosition = voxels.get(0, 0).center().x();
+        }
+
+        double rotation = voxels.get(0, 0).getAngle();
+        double currentPosition = voxels.get(0, 0).center().x();
+        double deltaPosition = currentPosition - previousPosition;
+
+        double reward = rotation < -Math.PI / 2 || rotation > Math.PI / 2 ? -50d : (deltaPosition <= 0d ? -25d : 10 * deltaPosition);
+
+        previousPosition = currentPosition;
+        return reward;
     }
 
-    double rotation = voxels.get(0, 0).getAngle();
-    double currentPosition = voxels.get(0, 0).center().x();
-    double deltaPosition = currentPosition - previousPosition;
-
-    double reward = rotation < -Math.PI / 2 || rotation > Math.PI / 2 ?
-        -100d : (deltaPosition <= 0d ? -50d : 10 * deltaPosition);
-
-    previousPosition = currentPosition;
-    return reward;
-  }
-
-  @Override
-  public void reset() {
-    previousPosition = Double.NEGATIVE_INFINITY;
-  }
+    @Override
+    public void reset() {
+        previousPosition = Double.NEGATIVE_INFINITY;
+    }
 }

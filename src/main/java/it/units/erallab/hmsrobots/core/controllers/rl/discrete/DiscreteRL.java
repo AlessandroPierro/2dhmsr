@@ -9,42 +9,49 @@ import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import java.util.function.Function;
 
 public interface DiscreteRL extends IOSized, Snapshottable, Resettable {
-  interface InputConverter extends Function<double[], Integer>, IOSized {
-  }
+    interface InputConverter extends Function<double[], Integer>, IOSized {
+    }
 
-  interface OutputConverter extends Function<Integer, double[]>, IOSized {
-  }
+    interface OutputConverter extends Function<Integer, double[]>, IOSized {
+    }
 
-  int apply(double t, int input, double r);
+    int apply(double t, int input, double r);
 
-  default ContinuousRL with(InputConverter inputConverter, OutputConverter outputConverter) {
-    DiscreteRL inner = this;
-    return new ContinuousRL() {
-      @Override
-      public double[] apply(double t, double[] state, double reward) {
-        return outputConverter.apply(inner.apply(t, inputConverter.apply(state), reward));
-      }
+    void reinitialize();
 
-      @Override
-      public int getInputDimension() {
-        return inputConverter.getInputDimension();
-      }
+    default ContinuousRL with(InputConverter inputConverter, OutputConverter outputConverter) {
+        DiscreteRL inner = this;
+        return new ContinuousRL() {
+            @Override
+            public double[] apply(double t, double[] state, double reward) {
+                return outputConverter.apply(inner.apply(t, inputConverter.apply(state), reward));
+            }
 
-      @Override
-      public int getOutputDimension() {
-        return outputConverter.getOutputDimension();
-      }
+            @Override
+            public int getInputDimension() {
+                return inputConverter.getInputDimension();
+            }
 
-      @Override
-      public Snapshot getSnapshot() {
-        return inner.getSnapshot();
-      }
+            @Override
+            public int getOutputDimension() {
+                return outputConverter.getOutputDimension();
+            }
 
-      @Override
-      public void reset() {
-        inner.reset();
-      }
-    };
-  }
+            @Override
+            public Snapshot getSnapshot() {
+                return inner.getSnapshot();
+            }
+
+            @Override
+            public void reset() {
+                inner.reset();
+            }
+
+            @Override
+            public void reinitialize() {
+                inner.reinitialize();
+            }
+        };
+    }
 
 }
