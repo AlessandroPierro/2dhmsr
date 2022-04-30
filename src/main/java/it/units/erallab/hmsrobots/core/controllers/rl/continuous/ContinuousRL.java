@@ -4,7 +4,9 @@ import it.units.erallab.hmsrobots.core.controllers.IOSized;
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 
-public interface ContinuousRL extends IOSized, Snapshottable, Resettable {
+import java.io.Serializable;
+
+public interface ContinuousRL extends IOSized, Snapshottable, Resettable, Serializable {
   double[] apply(double t, double[] input, double r);
 
   void reinitialize();

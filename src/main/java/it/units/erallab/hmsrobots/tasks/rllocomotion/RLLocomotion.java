@@ -30,26 +30,28 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 import org.dyn4j.dynamics.Settings;
 
-import java.io.File;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
-public class RLLocomotion extends AbstractTask<ToDoubleFunction<Grid<Voxel>>, RLOutcome> {
+public class RLLocomotion extends AbstractTask<ToDoubleFunction<Grid<Voxel>>, RLEnsembleOutcome> {
 
     private final double maxTime;
+    private final double maxEpisodeTime;
     private final int nAgents;
     private final Robot robot;
-    private final boolean detailedLog;
 
-    public RLLocomotion(double maxTime, int nAgents, Robot robot, boolean detailedLog) {
+    private static final double VALIDATION_TIME = 30d;
+
+    public RLLocomotion(double maxTime, double maxEpisodeTime, int nAgents, Robot robot) {
         super(new Settings());
         this.maxTime = maxTime;
+        this.maxEpisodeTime = maxEpisodeTime;
         this.nAgents = nAgents;
-        // TODO : Serialize/deserialize robot
-        this.robot = robot;
-        this.detailedLog = detailedLog;
+        this.robot = SerializationUtils.clone(robot);
     }
 
     Predicate<Map<Double, Outcome.Observation>> makeStoppingCriterion(double remainingTime) {
@@ -67,59 +69,33 @@ public class RLLocomotion extends AbstractTask<ToDoubleFunction<Grid<Voxel>>, RL
     }
 
     @Override
-    public RLOutcome apply(ToDoubleFunction<Grid<Voxel>> rewardFunction, SnapshotListener listener) {
-        double maxVelocity = Double.MIN_VALUE;
-        double meanVelocity = 0d;
-        double minVelocity = Double.MAX_VALUE;
+    public RLEnsembleOutcome apply(ToDoubleFunction<Grid<Voxel>> rewardFunction, SnapshotListener listener) {
+        Set<RLEnsembleOutcome.RLOutcome> outcomes = new HashSet<>();
         if (robot.getController() instanceof CompositeController cc) {
             if (cc.getInnermostController() instanceof RLController rlController) {
                 rlController.setRewardFunction(rewardFunction);
                 for (int i = 0; i < nAgents; i++) {
-                    int counter = 0;
-                    // TODO : remove this
-                    System.out.println("Agent " + i);
-                    rlController.getRL().reinitialize();
                     double usedTime = 0;
+                    RLListener innerListener = new RLListener();
+                    rlController.getRL().reinitialize();
                     while (usedTime < maxTime - 0.5) {
-                        counter++;
-                        final double remainingTime = maxTime - usedTime;
-                        // TODO : remove this
-                        System.out.println("New episode" + " remaining time: " + remainingTime);
-                        Predicate<Map<Double, Outcome.Observation>> earlyStopping = makeStoppingCriterion(200d);
+                        Predicate<Map<Double, Outcome.Observation>> earlyStopping = makeStoppingCriterion(Math.min(maxEpisodeTime, maxTime - usedTime));
                         Locomotion locomotion = new Locomotion(earlyStopping, StarterRL.getTerrain(), 50000, new Settings());
-                        RLListener innerListener = detailedLog ? new RLListener() : null;
-                        Outcome outcome = locomotion.apply(robot, listener);
-                        if (detailedLog) {
-                            File file = new File("logs/rl/rl_" + i + "_" + counter + ".csv");
-                            innerListener.toFile(file);
-                        }
+                        Outcome outcome = locomotion.apply(robot, innerListener);
                         usedTime += outcome.getTime();
                     }
-                    // TODO : remove this
-                    System.out.println("Agent " + i + " finished after " + counter + " episodes");
-
-                    Locomotion locomotion = new Locomotion(60, StarterRL.getTerrain(), 50000, new Settings());
+                    Locomotion locomotion = new Locomotion(VALIDATION_TIME, StarterRL.getTerrain(), 50000, new Settings());
                     Outcome outcome = locomotion.apply(robot);
-                    double velocity = outcome.getDistance() / outcome.getTime();
-                    meanVelocity = meanVelocity + velocity;
-                    maxVelocity = Math.max(maxVelocity, velocity);
-                    minVelocity = Math.min(minVelocity, velocity);
+                    double avgVelocity = outcome.getDistance() / outcome.getTime();
+                    outcomes.add(new RLEnsembleOutcome.RLOutcome(innerListener.extractVelocities().stream().toList(), innerListener.extractRewards().stream().toList(), avgVelocity));
                 }
-                // TODO : remove testing
-                //Locomotion locomotion = new Locomotion(60, StarterRL.getTerrain(), 5000, new Settings());
-                //GridOnlineViewer.run(locomotion, Grid.create(1, 1, new NamedValue<>("SARSA(Lambda)", robot)), Drawers::basicWithMiniWorldAndRL);
-
             }
         }
-
-        System.out.println("Mean velocity: " + meanVelocity / nAgents);
-        System.out.println("Max velocity: " + maxVelocity);
-        System.out.println("Min velocity: " + minVelocity);
-        return new RLOutcome(minVelocity, maxVelocity, meanVelocity / nAgents);
+        return new RLEnsembleOutcome(outcomes);
     }
 
     @Override
-    public RLOutcome apply(ToDoubleFunction<Grid<Voxel>> solution) {
+    public RLEnsembleOutcome apply(ToDoubleFunction<Grid<Voxel>> solution) {
         return apply(solution, null);
     }
 

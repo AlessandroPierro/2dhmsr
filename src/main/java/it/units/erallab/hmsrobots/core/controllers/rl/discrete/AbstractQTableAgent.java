@@ -5,12 +5,13 @@ import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import org.apache.commons.math3.linear.RealMatrix;
 
+import java.io.Serializable;
 import java.util.Random;
 import java.util.random.RandomGenerator;
 
 import static org.apache.commons.math3.linear.MatrixUtils.createRealMatrix;
 
-public abstract class AbstractQTableAgent implements DiscreteRL, Snapshottable {
+public abstract class AbstractQTableAgent implements DiscreteRL, Snapshottable, Serializable {
     protected final double discountFactor;
     protected final int stateDim;
     protected final int actionDim;
@@ -67,7 +68,7 @@ public abstract class AbstractQTableAgent implements DiscreteRL, Snapshottable {
     }
 
     private double learningRateSchedule(double t) {
-        return 1d / (1d + episodeNumber);
+        return 0.05;
     }
 
     public int getInputDimension() {

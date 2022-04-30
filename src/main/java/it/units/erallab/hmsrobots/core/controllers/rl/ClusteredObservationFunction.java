@@ -22,41 +22,25 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
     private final boolean area;
     @JsonProperty
     private final boolean touch;
+    @JsonProperty
+    private final boolean rotation;
 
-    private final LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map;
+    private transient LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map;
 
-    private final int nClusters;
     private final int nSensorReadings;
 
     @JsonCreator
     public ClusteredObservationFunction(
             @JsonProperty("clusters") List<List<Grid.Key>> clusters,
             @JsonProperty("area") boolean area,
-            @JsonProperty("touch") boolean touch
+            @JsonProperty("touch") boolean touch,
+            @JsonProperty("rotation") boolean rotation
     ) {
         this.clusters = clusters;
         this.area = area;
         this.touch = touch;
-        this.map = new LinkedHashMap<>();
-        int counter = 0;
-        for (List<Grid.Key> cluster : clusters) {
-            LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>> sensorMap = new LinkedHashMap<>();
-            ToDoubleFunction<double[]> meanOp = x -> x.length == 0 ? 0d : Arrays.stream(x).sum() / x.length;
-            ToDoubleFunction<double[]> max = x -> Arrays.stream(x).max().orElse(0d);
-            ToDoubleFunction<double[]> min = x -> Arrays.stream(x).min().orElse(0d);
-            ToDoubleFunction<double[]> angleMap = x -> 0.25 < min.applyAsDouble(x) && max.applyAsDouble(x) < 0.75 ? 0.45 : 0.85;
-            if (area)
-                sensorMap.put(AreaRatio.class, meanOp);
-            if (touch)
-                sensorMap.put(Touch.class, max);
-            if (counter == 0) {
-                sensorMap.put(Angle.class, angleMap);
-                counter++;
-            }
-            map.put(cluster, sensorMap);
-        }
-
-        this.nClusters = map.size();
+        this.rotation = rotation;
+        this.map = makeMap();
         this.nSensorReadings = map.values().stream().mapToInt(Map::size).sum();
     }
 
@@ -65,8 +49,11 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
             Double t, Grid<Voxel> voxels
     ) {
 
+        if (map == null) {
+            map = makeMap();
+        }
+
         double[] observations = new double[nSensorReadings];
-        Arrays.fill(observations, 0d);
 
         int counter = 0;
 
@@ -102,11 +89,29 @@ public class ClusteredObservationFunction implements BiFunction<Double, Grid<Vox
         return observations;
     }
 
-    public int getOutputDimension() {
-        return nSensorReadings;
+    private LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> makeMap() {
+        LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map = new LinkedHashMap<>();
+        int counter = 0;
+        for (List<Grid.Key> cluster : clusters) {
+            LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>> sensorMap = new LinkedHashMap<>();
+            ToDoubleFunction<double[]> meanOp = x -> x.length == 0 ? 0d : Arrays.stream(x).sum() / x.length;
+            ToDoubleFunction<double[]> max = x -> Arrays.stream(x).max().orElse(0d);
+            ToDoubleFunction<double[]> min = x -> Arrays.stream(x).min().orElse(0d);
+            ToDoubleFunction<double[]> angleMap = x -> 0.25 < min.applyAsDouble(x) && max.applyAsDouble(x) < 0.75 ? 0.45 : 0.85;
+            if (area)
+                sensorMap.put(AreaRatio.class, meanOp);
+            if (touch)
+                sensorMap.put(Touch.class, max);
+            if (rotation && counter == 0) {
+                sensorMap.put(Angle.class, angleMap);
+                counter++;
+            }
+            map.put(cluster, sensorMap);
+        }
+        return map;
     }
 
-    public int getnClusters() {
-        return nClusters;
+    public int getOutputDimension() {
+        return nSensorReadings;
     }
 }

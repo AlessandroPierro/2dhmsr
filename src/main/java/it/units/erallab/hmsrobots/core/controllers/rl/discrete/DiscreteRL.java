@@ -6,9 +6,10 @@ import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 
+import java.io.Serializable;
 import java.util.function.Function;
 
-public interface DiscreteRL extends IOSized, Snapshottable, Resettable {
+public interface DiscreteRL extends IOSized, Snapshottable, Resettable, Serializable {
     interface InputConverter extends Function<double[], Integer>, IOSized {
     }
 

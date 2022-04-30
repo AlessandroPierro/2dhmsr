@@ -2,7 +2,9 @@ package it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters;
 
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 
-public class BinaryOutputConverter implements DiscreteRL.OutputConverter {
+import java.io.Serializable;
+
+public class BinaryOutputConverter implements DiscreteRL.OutputConverter, Serializable {
 
   private final int outputDimension;
   private final double force;

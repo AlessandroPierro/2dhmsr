@@ -4,9 +4,10 @@ import it.units.erallab.hmsrobots.core.controllers.Resettable;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.util.Grid;
 
+import java.io.Serializable;
 import java.util.function.ToDoubleFunction;
 
-public class RewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettable {
+public class RewardFunction implements ToDoubleFunction<Grid<Voxel>>, Resettable, Serializable {
 
     private double previousPosition = Double.NEGATIVE_INFINITY;
 

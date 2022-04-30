@@ -17,6 +17,11 @@
 
 package it.units.erallab.hmsrobots.tasks.rllocomotion;
 
-public record RLOutcome(double minVelocity, double maxVelocity, double meanVelocity) {
+import java.util.List;
+import java.util.Set;
+
+public record RLEnsembleOutcome(Set<RLOutcome> results) {
+
+    public record RLOutcome(List<Double> velocities, List<Double> rewards, double validationVelocity) {}
 
 }

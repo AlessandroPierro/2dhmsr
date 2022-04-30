@@ -2,7 +2,9 @@ package it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters;
 
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.DiscreteRL;
 
-public class BinaryInputConverter implements DiscreteRL.InputConverter {
+import java.io.Serializable;
+
+public class BinaryInputConverter implements DiscreteRL.InputConverter, Serializable {
 
   private final int inputDimension;
   private final double splitValue;
