@@ -1,33 +1,16 @@
 package it.units.erallab.hmsrobots.core.controllers.rl;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
-import it.units.erallab.hmsrobots.core.controllers.SerializableToDoubleFunction;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.util.Grid;
+import it.units.erallab.hmsrobots.util.SerializableFunction;
+import it.units.erallab.hmsrobots.util.SerializationUtils;
 
-public class RewardFunction implements SerializableToDoubleFunction<Grid<Voxel>>, Resettable {
-
-    private double previousPosition = Double.NEGATIVE_INFINITY;
-
-    @Override
-    public double applyAsDouble(Grid<Voxel> voxels) {
-
-        if (previousPosition == Double.NEGATIVE_INFINITY) {
-            previousPosition = voxels.get(0, 0).center().x();
-        }
-
-        double rotation = voxels.get(0, 0).getAngle();
-        double currentPosition = voxels.get(0, 0).center().x();
-        double deltaPosition = currentPosition - previousPosition;
-
-        double reward = rotation < -Math.PI / 2 || rotation > Math.PI / 2 ? -50d : (deltaPosition <= 0d ? -25d : 10 * deltaPosition);
-
-        previousPosition = currentPosition;
-        return reward;
-    }
+public interface RewardFunction extends Resettable, SerializableFunction<Grid<Voxel>, Double> {
 
     @Override
-    public void reset() {
-        previousPosition = Double.NEGATIVE_INFINITY;
+    default void reset() {
     }
 }

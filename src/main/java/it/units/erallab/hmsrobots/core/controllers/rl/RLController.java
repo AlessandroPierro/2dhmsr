@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.controllers.AbstractController;
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
-import it.units.erallab.hmsrobots.core.controllers.SerializableToDoubleFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
 import it.units.erallab.hmsrobots.core.geometry.Point2;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
@@ -22,7 +21,7 @@ public class RLController extends AbstractController implements Snapshottable, S
     @JsonProperty
     private final ClusteredObservationFunction observationFunction;
     @JsonProperty
-    private SerializableToDoubleFunction<Grid<Voxel>> rewardFunction;
+    private RewardFunction rewardFunction;
     @JsonProperty
     private final ContinuousRL rl;
     @JsonProperty
@@ -36,7 +35,7 @@ public class RLController extends AbstractController implements Snapshottable, S
     @JsonCreator
     public RLController(
             @JsonProperty("observationFunction") ClusteredObservationFunction observationFunction,
-            @JsonProperty("rewardFunction") SerializableToDoubleFunction<Grid<Voxel>> rewardFunction,
+            @JsonProperty("rewardFunction") RewardFunction rewardFunction,
             @JsonProperty("rl") ContinuousRL rl,
             @JsonProperty("controlFunction") Function<double[], Grid<Double>> controlFunction
     ) {
@@ -55,7 +54,7 @@ public class RLController extends AbstractController implements Snapshottable, S
         currentVelocity = voxels.values().stream().filter(Objects::nonNull).map(Voxel::getLinearVelocity).map(Point2::x).reduce(0.0, Double::sum) / nVoxels;
 
         observation = observationFunction.apply(t, voxels);
-        reward = rewardFunction.applyAsDouble(voxels);
+        reward = rewardFunction.apply(voxels);
         action = rl.apply(t, observation, reward);
         return controlFunction.apply(action);
     }
@@ -70,9 +69,7 @@ public class RLController extends AbstractController implements Snapshottable, S
     @Override
     public void reset() {
         rl.reset();
-        if (rewardFunction instanceof Resettable r) {
-            r.reset();
-        }
+        rewardFunction.reset();
         if (observationFunction instanceof Resettable r) {
             r.reset();
         }
@@ -81,7 +78,7 @@ public class RLController extends AbstractController implements Snapshottable, S
         }
     }
 
-    public void setRewardFunction(SerializableToDoubleFunction<Grid<Voxel>> rewardFunction) {
+    public void setRewardFunction(RewardFunction rewardFunction) {
         this.rewardFunction = rewardFunction;
     }
 

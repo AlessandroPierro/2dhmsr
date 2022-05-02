@@ -18,11 +18,10 @@ package it.units.erallab.hmsrobots.tasks.rllocomotion;
 
 import it.units.erallab.hmsrobots.StarterRL;
 import it.units.erallab.hmsrobots.core.controllers.CompositeController;
-import it.units.erallab.hmsrobots.core.controllers.SerializableToDoubleFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.RLController;
 import it.units.erallab.hmsrobots.core.controllers.rl.RLListener;
+import it.units.erallab.hmsrobots.core.controllers.rl.RewardFunction;
 import it.units.erallab.hmsrobots.core.objects.Robot;
-import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.snapshots.SnapshotListener;
 import it.units.erallab.hmsrobots.tasks.AbstractTask;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
@@ -37,7 +36,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class RLLocomotion extends AbstractTask<SerializableToDoubleFunction<Grid<Voxel>>, RLEnsembleOutcome> {
+public class RLLocomotion extends AbstractTask<RewardFunction, RLEnsembleOutcome> {
 
     private final double maxTime;
     private final double maxEpisodeTime;
@@ -69,7 +68,7 @@ public class RLLocomotion extends AbstractTask<SerializableToDoubleFunction<Grid
     }
 
     @Override
-    public RLEnsembleOutcome apply(SerializableToDoubleFunction<Grid<Voxel>> rewardFunction, SnapshotListener listener) {
+    public RLEnsembleOutcome apply(RewardFunction rewardFunction, SnapshotListener listener) {
         Set<RLEnsembleOutcome.RLOutcome> outcomes = new HashSet<>();
         if (robot.getController() instanceof CompositeController cc) {
             if (cc.getInnermostController() instanceof RLController rlController) {
@@ -95,7 +94,7 @@ public class RLLocomotion extends AbstractTask<SerializableToDoubleFunction<Grid
     }
 
     @Override
-    public RLEnsembleOutcome apply(SerializableToDoubleFunction<Grid<Voxel>> solution) {
+    public RLEnsembleOutcome apply(RewardFunction solution) {
         return apply(solution, null);
     }
 

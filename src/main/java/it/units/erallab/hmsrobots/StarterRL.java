@@ -1,6 +1,6 @@
 package it.units.erallab.hmsrobots;
 
-import it.units.erallab.hmsrobots.core.controllers.SerializableToDoubleFunction;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredControlFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredObservationFunction;
@@ -21,6 +21,7 @@ import it.units.erallab.hmsrobots.util.SerializationUtils;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Function;
 
 import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
 
@@ -83,7 +84,44 @@ public class StarterRL {
         int stateSpaceDimension = (int) Math.pow(2, sensorReadingsDimension);
 
         // Create the reward function
-        SerializableToDoubleFunction<Grid<Voxel>> rewardFunction = new RewardFunction();
+        RewardFunction rewardFunction = new RewardFunction() {
+
+            @JsonProperty
+            private double previousPosition = Double.NEGATIVE_INFINITY;
+
+            @Override
+            public Double apply(Grid<Voxel> voxels) {
+
+                if (previousPosition == Double.NEGATIVE_INFINITY) {
+                    previousPosition = voxels.get(0, 0).center().x();
+                }
+
+                double rotation = voxels.get(0, 0).getAngle();
+                double currentPosition = voxels.get(0, 0).center().x();
+                double deltaPosition = currentPosition - previousPosition;
+
+                double reward = rotation < -Math.PI / 2 || rotation > Math.PI / 2 ? -50d : (deltaPosition <= 0d ? -25d : 10 * deltaPosition);
+
+                previousPosition = currentPosition;
+
+                return reward;
+            }
+
+            @Override
+            public <V> Function<V, Double> compose(Function<? super V, ? extends Grid<Voxel>> before) {
+                return RewardFunction.super.compose(before);
+            }
+
+            @Override
+            public <V> Function<Grid<Voxel>, V> andThen(Function<? super Double, ? extends V> after) {
+                return RewardFunction.super.andThen(after);
+            }
+
+            @Override
+            public void reset() {
+                previousPosition = Double.NEGATIVE_INFINITY;
+            }
+        };
 
         // Create binary input converter
         DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(sensorReadingsDimension);
