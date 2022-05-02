@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.controllers.AbstractController;
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
+import it.units.erallab.hmsrobots.core.controllers.SerializableToDoubleFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.continuous.ContinuousRL;
 import it.units.erallab.hmsrobots.core.geometry.Point2;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
@@ -15,14 +16,13 @@ import it.units.erallab.hmsrobots.util.Grid;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
 
 public class RLController extends AbstractController implements Snapshottable, Serializable {
 
     @JsonProperty
     private final ClusteredObservationFunction observationFunction;
     @JsonProperty
-    private ToDoubleFunction<Grid<Voxel>> rewardFunction;
+    private SerializableToDoubleFunction<Grid<Voxel>> rewardFunction;
     @JsonProperty
     private final ContinuousRL rl;
     @JsonProperty
@@ -36,7 +36,7 @@ public class RLController extends AbstractController implements Snapshottable, S
     @JsonCreator
     public RLController(
             @JsonProperty("observationFunction") ClusteredObservationFunction observationFunction,
-            @JsonProperty("rewardFunction") ToDoubleFunction<Grid<Voxel>> rewardFunction,
+            @JsonProperty("rewardFunction") SerializableToDoubleFunction<Grid<Voxel>> rewardFunction,
             @JsonProperty("rl") ContinuousRL rl,
             @JsonProperty("controlFunction") Function<double[], Grid<Double>> controlFunction
     ) {
@@ -81,7 +81,7 @@ public class RLController extends AbstractController implements Snapshottable, S
         }
     }
 
-    public void setRewardFunction(ToDoubleFunction<Grid<Voxel>> rewardFunction) {
+    public void setRewardFunction(SerializableToDoubleFunction<Grid<Voxel>> rewardFunction) {
         this.rewardFunction = rewardFunction;
     }
 
