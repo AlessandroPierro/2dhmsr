@@ -5,16 +5,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
 import it.units.erallab.hmsrobots.core.sensors.*;
 import it.units.erallab.hmsrobots.util.Grid;
+import it.units.erallab.hmsrobots.util.SerializableBiFunction;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.ToDoubleFunction;
 
-public class ClusteredObservationFunction implements BiFunction<Double, Grid<Voxel>, double[]>, Serializable {
+public class ClusteredObservationFunction implements SerializableBiFunction<Double, Grid<Voxel>, double[]> {
 
     @JsonProperty
     private final List<List<Grid.Key>> clusters;
