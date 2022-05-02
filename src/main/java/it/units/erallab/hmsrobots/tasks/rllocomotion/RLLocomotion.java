@@ -18,6 +18,7 @@ package it.units.erallab.hmsrobots.tasks.rllocomotion;
 
 import it.units.erallab.hmsrobots.StarterRL;
 import it.units.erallab.hmsrobots.core.controllers.CompositeController;
+import it.units.erallab.hmsrobots.core.controllers.SerializableToDoubleFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.RLController;
 import it.units.erallab.hmsrobots.core.controllers.rl.RLListener;
 import it.units.erallab.hmsrobots.core.objects.Robot;
@@ -34,10 +35,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
-public class RLLocomotion extends AbstractTask<ToDoubleFunction<Grid<Voxel>>, RLEnsembleOutcome> {
+public class RLLocomotion extends AbstractTask<SerializableToDoubleFunction<Grid<Voxel>>, RLEnsembleOutcome> {
 
     private final double maxTime;
     private final double maxEpisodeTime;
@@ -69,7 +69,7 @@ public class RLLocomotion extends AbstractTask<ToDoubleFunction<Grid<Voxel>>, RL
     }
 
     @Override
-    public RLEnsembleOutcome apply(ToDoubleFunction<Grid<Voxel>> rewardFunction, SnapshotListener listener) {
+    public RLEnsembleOutcome apply(SerializableToDoubleFunction<Grid<Voxel>> rewardFunction, SnapshotListener listener) {
         Set<RLEnsembleOutcome.RLOutcome> outcomes = new HashSet<>();
         if (robot.getController() instanceof CompositeController cc) {
             if (cc.getInnermostController() instanceof RLController rlController) {
@@ -95,7 +95,7 @@ public class RLLocomotion extends AbstractTask<ToDoubleFunction<Grid<Voxel>>, RL
     }
 
     @Override
-    public RLEnsembleOutcome apply(ToDoubleFunction<Grid<Voxel>> solution) {
+    public RLEnsembleOutcome apply(SerializableToDoubleFunction<Grid<Voxel>> solution) {
         return apply(solution, null);
     }
 

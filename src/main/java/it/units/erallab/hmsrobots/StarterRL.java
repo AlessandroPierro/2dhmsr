@@ -1,5 +1,6 @@
 package it.units.erallab.hmsrobots;
 
+import it.units.erallab.hmsrobots.core.controllers.SerializableToDoubleFunction;
 import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredControlFunction;
 import it.units.erallab.hmsrobots.core.controllers.rl.ClusteredObservationFunction;
@@ -20,7 +21,6 @@ import it.units.erallab.hmsrobots.util.SerializationUtils;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.ToDoubleFunction;
 
 import static it.units.erallab.hmsrobots.behavior.PoseUtils.computeCardinalPoses;
 
@@ -83,7 +83,7 @@ public class StarterRL {
         int stateSpaceDimension = (int) Math.pow(2, sensorReadingsDimension);
 
         // Create the reward function
-        ToDoubleFunction<Grid<Voxel>> rewardFunction = new RewardFunction();
+        SerializableToDoubleFunction<Grid<Voxel>> rewardFunction = new RewardFunction();
 
         // Create binary input converter
         DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(sensorReadingsDimension);
