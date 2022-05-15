@@ -16,8 +16,7 @@
  */
 package it.units.erallab.hmsrobots.util;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.io.Serializable;
 import java.util.function.BiFunction;
@@ -26,8 +25,7 @@ import java.util.function.BiFunction;
  * @author Eric Medvet <eric.medvet@gmail.com>
  */
 @FunctionalInterface
-@JsonSerialize(using = SerializationUtils.LambdaJsonSerializer.class)
-@JsonDeserialize(using = SerializationUtils.LambdaJsonDeserializer.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public interface SerializableBiFunction<T, R, S> extends BiFunction<T, R, S>, Serializable {
 
 }

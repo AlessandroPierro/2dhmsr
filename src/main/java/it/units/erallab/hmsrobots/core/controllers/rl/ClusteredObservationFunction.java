@@ -7,6 +7,7 @@ import it.units.erallab.hmsrobots.core.sensors.*;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.SerializableBiFunction;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,30 +16,30 @@ import java.util.function.ToDoubleFunction;
 
 public class ClusteredObservationFunction implements SerializableBiFunction<Double, Grid<Voxel>, double[]> {
 
+    public record Config (
+            boolean area,
+            boolean touch,
+            boolean rotation,
+            boolean velocityX,
+            boolean velocityY
+    ) implements Serializable {}
+
     @JsonProperty
     private final List<List<Grid.Key>> clusters;
     @JsonProperty
-    private final boolean area;
-    @JsonProperty
-    private final boolean touch;
-    @JsonProperty
-    private final boolean rotation;
+    private final Config config;
 
     private transient LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map;
 
-    private final int nSensorReadings;
+    private transient int nSensorReadings;
 
     @JsonCreator
     public ClusteredObservationFunction(
             @JsonProperty("clusters") List<List<Grid.Key>> clusters,
-            @JsonProperty("area") boolean area,
-            @JsonProperty("touch") boolean touch,
-            @JsonProperty("rotation") boolean rotation
+            @JsonProperty("config") Config config
     ) {
         this.clusters = clusters;
-        this.area = area;
-        this.touch = touch;
-        this.rotation = rotation;
+        this.config = config;
         this.map = makeMap();
         this.nSensorReadings = map.values().stream().mapToInt(Map::size).sum();
     }
@@ -49,7 +50,8 @@ public class ClusteredObservationFunction implements SerializableBiFunction<Doub
     ) {
 
         if (map == null) {
-            map = makeMap();
+            this.map = makeMap();
+            this.nSensorReadings = map.values().stream().mapToInt(Map::size).sum();
         }
 
         double[] observations = new double[nSensorReadings];
@@ -90,21 +92,22 @@ public class ClusteredObservationFunction implements SerializableBiFunction<Doub
 
     private LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> makeMap() {
         LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map = new LinkedHashMap<>();
-        int counter = 0;
         for (List<Grid.Key> cluster : clusters) {
             LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>> sensorMap = new LinkedHashMap<>();
             ToDoubleFunction<double[]> meanOp = x -> x.length == 0 ? 0d : Arrays.stream(x).sum() / x.length;
             ToDoubleFunction<double[]> max = x -> Arrays.stream(x).max().orElse(0d);
             ToDoubleFunction<double[]> min = x -> Arrays.stream(x).min().orElse(0d);
             ToDoubleFunction<double[]> angleMap = x -> 0.25 < min.applyAsDouble(x) && max.applyAsDouble(x) < 0.75 ? 0.45 : 0.85;
-            if (area)
+            if (config.area)
                 sensorMap.put(AreaRatio.class, meanOp);
-            if (touch)
+            if (config.touch)
                 sensorMap.put(Touch.class, max);
-            if (rotation && counter == 0) {
+            if (config.rotation)
                 sensorMap.put(Angle.class, angleMap);
-                counter++;
-            }
+            if (config.velocityX)
+                sensorMap.put(VelocityX.class, meanOp);
+            if (config.velocityY)
+                sensorMap.put(VelocityY.class, meanOp);
             map.put(cluster, sensorMap);
         }
         return map;

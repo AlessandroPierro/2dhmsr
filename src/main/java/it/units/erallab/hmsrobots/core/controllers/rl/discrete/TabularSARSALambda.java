@@ -6,8 +6,8 @@ import static org.apache.commons.math3.linear.MatrixUtils.createRealMatrix;
 
 public class TabularSARSALambda extends AbstractQTableAgent {
 
-    private final double lambda;
-    private RealMatrix eTraces;
+    protected final double lambda;
+    protected RealMatrix eTraces;
 
     public TabularSARSALambda(double discountFactor, double lambda, int stateDim, int actionDim, double meanQ, double stdQ, int seed) {
         super(discountFactor, stateDim, actionDim, meanQ, stdQ, seed);

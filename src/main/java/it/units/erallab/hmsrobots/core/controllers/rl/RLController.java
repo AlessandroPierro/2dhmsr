@@ -11,6 +11,7 @@ import it.units.erallab.hmsrobots.core.snapshots.RLControllerState;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import it.units.erallab.hmsrobots.util.Grid;
+import it.units.erallab.hmsrobots.util.SerializableFunction;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -21,7 +22,7 @@ public class RLController extends AbstractController implements Snapshottable, S
     @JsonProperty
     private final ClusteredObservationFunction observationFunction;
     @JsonProperty
-    private RewardFunction rewardFunction;
+    private SerializableFunction<Grid<Voxel>, Double> rewardFunction;
     @JsonProperty
     private final ContinuousRL rl;
     @JsonProperty
@@ -35,7 +36,7 @@ public class RLController extends AbstractController implements Snapshottable, S
     @JsonCreator
     public RLController(
             @JsonProperty("observationFunction") ClusteredObservationFunction observationFunction,
-            @JsonProperty("rewardFunction") RewardFunction rewardFunction,
+            @JsonProperty("rewardFunction") SerializableFunction<Grid<Voxel>, Double> rewardFunction,
             @JsonProperty("rl") ContinuousRL rl,
             @JsonProperty("controlFunction") Function<double[], Grid<Double>> controlFunction
     ) {
@@ -69,8 +70,8 @@ public class RLController extends AbstractController implements Snapshottable, S
     @Override
     public void reset() {
         rl.reset();
-        if (rewardFunction != null) {
-            rewardFunction.reset();
+        if (rewardFunction != null && rewardFunction instanceof Resettable r) {
+            r.reset();
         }
         if (observationFunction instanceof Resettable r) {
             r.reset();
@@ -80,7 +81,7 @@ public class RLController extends AbstractController implements Snapshottable, S
         }
     }
 
-    public void setRewardFunction(RewardFunction rewardFunction) {
+    public void setRewardFunction(SerializableFunction<Grid<Voxel>, Double> rewardFunction) {
         this.rewardFunction = rewardFunction;
     }
 
