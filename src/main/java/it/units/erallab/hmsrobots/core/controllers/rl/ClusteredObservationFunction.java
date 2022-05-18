@@ -21,7 +21,9 @@ public class ClusteredObservationFunction implements SerializableBiFunction<Doub
             boolean touch,
             boolean rotation,
             boolean velocityX,
-            boolean velocityY
+            boolean velocityY,
+            boolean accelerationX,
+            boolean accelerationY
     ) implements Serializable {}
 
     @JsonProperty
@@ -108,6 +110,10 @@ public class ClusteredObservationFunction implements SerializableBiFunction<Doub
                 sensorMap.put(VelocityX.class, meanOp);
             if (config.velocityY)
                 sensorMap.put(VelocityY.class, meanOp);
+            if (config.accelerationX)
+                sensorMap.put(AccelerationX.class, meanOp);
+            if (config.accelerationY)
+                sensorMap.put(AccelerationY.class, meanOp);
             map.put(cluster, sensorMap);
         }
         return map;

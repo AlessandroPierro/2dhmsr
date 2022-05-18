@@ -30,6 +30,7 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 import org.dyn4j.dynamics.Settings;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -85,6 +86,11 @@ public class RLLocomotion extends AbstractTask<RewardFunction, RLEnsembleOutcome
                     }
                     Locomotion locomotion = new Locomotion(VALIDATION_TIME, StarterRL.getTerrain(), 50000, new Settings());
                     Outcome outcome = locomotion.apply(robot);
+                    //locomotion = new Locomotion(70, StarterRL.getTerrain(), 50000, new Settings());
+                    //RLListener ll = new RLListener();
+                    //locomotion.apply(robot, ll);
+                    //File file = new File("validation_data.csv");
+                    //ll.toFile(file);
                     double avgVelocity = outcome.getDistance() / outcome.getTime();
                     outcomes.add(new RLEnsembleOutcome.RLOutcome(innerListener.extractVelocities().stream().toList(), innerListener.extractRewards().stream().toList(), avgVelocity));
                 }

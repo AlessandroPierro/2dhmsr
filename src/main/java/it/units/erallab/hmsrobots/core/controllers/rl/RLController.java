@@ -28,7 +28,8 @@ public class RLController extends AbstractController implements Snapshottable, S
     @JsonProperty
     private final Function<double[], Grid<Double>> controlFunction;
 
-    private double currentVelocity;
+    private double currentVelocityX;
+    private double currentVelocityY;
     private double[] observation;
     private double reward;
     private double[] action;
@@ -52,8 +53,8 @@ public class RLController extends AbstractController implements Snapshottable, S
     ) {
         // Track the current velocity
         int nVoxels = (int) voxels.values().stream().filter(Objects::nonNull).count();
-        currentVelocity = voxels.values().stream().filter(Objects::nonNull).map(Voxel::getLinearVelocity).map(Point2::x).reduce(0.0, Double::sum) / nVoxels;
-
+        currentVelocityX = voxels.values().stream().filter(Objects::nonNull).map(Voxel::getLinearVelocity).map(Point2::x).reduce(0.0, Double::sum) / nVoxels;
+        currentVelocityY = voxels.values().stream().filter(Objects::nonNull).map(Voxel::getLinearVelocity).map(Point2::y).reduce(0.0, Double::sum) / nVoxels;
         observation = observationFunction.apply(t, voxels);
         reward = rewardFunction.apply(voxels);
         action = rl.apply(t, observation, reward);
@@ -62,7 +63,7 @@ public class RLController extends AbstractController implements Snapshottable, S
 
     @Override
     public Snapshot getSnapshot() {
-        Snapshot snapshot = new Snapshot(new RLControllerState(reward, observation, action, currentVelocity), getClass());
+        Snapshot snapshot = new Snapshot(new RLControllerState(reward, observation, action, currentVelocityX, currentVelocityY), getClass());
         snapshot.getChildren().add(rl.getSnapshot());
         return snapshot;
     }

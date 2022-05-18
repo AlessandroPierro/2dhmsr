@@ -19,6 +19,8 @@ package it.units.erallab.hmsrobots.core.sensors;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import it.units.erallab.hmsrobots.util.DoubleRange;
 
+import java.util.Arrays;
+
 public class AccelerationY extends AbstractSensor {
 
     private static final AbstractSensor sensor = new SoftNormalization(new Trend(new VelocityY(4d), 0.5));

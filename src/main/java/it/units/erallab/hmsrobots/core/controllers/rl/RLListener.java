@@ -21,7 +21,7 @@ public class RLListener implements SnapshotListener {
         this.history = new ArrayList<>();
     }
 
-    record RLEvent(double time, double reward, double velocity) {
+    record RLEvent(double time, double reward, double velocityX, double velocityY) {
     }
 
     private static File check(File file) {
@@ -71,7 +71,8 @@ public class RLListener implements SnapshotListener {
             RLEvent event = new RLEvent(
                     t,
                     controllerState.getReward(),
-                    controllerState.getVelocity()
+                    controllerState.getVelocityX(),
+                    controllerState.getVelocityY()
             );
             history.add(event);
             t0 = t;
@@ -80,14 +81,14 @@ public class RLListener implements SnapshotListener {
 
     public void toFile(File file) {
         List<String> lines = history.stream()
-                .map(event -> String.format("%f;%f;%f", event.time, event.reward, event.velocity))
+                .map(event -> String.format("%f;%f;%f;%f", event.time, event.reward, event.velocityX, event.velocityY))
                 .map(s -> s.replace(",", "."))
                 .map(s -> s.replace(";", ","))
                 .toList();
         file = check(file);
         try {
             FileWriter fileWriter = new FileWriter(file);
-            fileWriter.write("time,reward,velocity" + System.lineSeparator());
+            fileWriter.write("time,reward,velocityX,velocityY" + System.lineSeparator());
             for (String line : lines) {
                 fileWriter.write(line + System.lineSeparator());
             }
@@ -102,7 +103,7 @@ public class RLListener implements SnapshotListener {
     }
 
     public List<Double> extractVelocities() {
-        return history.stream().map(event -> event.velocity).toList();
+        return history.stream().map(event -> event.velocityX).toList();
     }
 
 }
