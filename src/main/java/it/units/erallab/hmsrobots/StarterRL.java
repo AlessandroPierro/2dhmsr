@@ -9,6 +9,7 @@ import it.units.erallab.hmsrobots.core.controllers.rl.discrete.TabularQLearning;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.TabularSARSALambda;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.BinaryInputConverter;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.BinaryOutputConverter;
+import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.InputConverter;
 import it.units.erallab.hmsrobots.core.controllers.rl.discrete.converters.TabularQLambda;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
@@ -403,14 +404,6 @@ public class StarterRL {
     ClusteredObservationFunction observationFunction = new ClusteredObservationFunction(clusters, cfg);
     observationFunction.setMap(map);
 
-    // Compute dimensions
-    int sensorReadingsDimension = observationFunction.getOutputDimension();
-    int actionSpaceDimension = (int) Math.pow(2, nClusters);
-    int stateSpaceDimension = (int) Math.pow(2, sensorReadingsDimension);
-    System.out.println("State space dimension: " + stateSpaceDimension);
-    System.out.println("Action space dimension: " + actionSpaceDimension);
-    System.out.println("Sensor readings dimension: " + sensorReadingsDimension);
-
     // Create the reward function
     RewardFunction rewardFunction = new RewardFunction() {
 
@@ -447,10 +440,19 @@ public class StarterRL {
     };
 
     // Create binary input converter
-    DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(sensorReadingsDimension);
+    int[] splits = new int[]{2,2,5,5,5};
+    DiscreteRL.InputConverter binaryInputConverter = new InputConverter(splits);
 
     // Create binary output converter
     DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(nClusters, actuatorsForce);
+
+    // Compute dimensions
+    int sensorReadingsDimension = observationFunction.getOutputDimension();
+    int actionSpaceDimension = (int) Math.pow(2, nClusters);
+    int stateSpaceDimension = 500;
+    System.out.println("State space dimension: " + stateSpaceDimension);
+    System.out.println("Action space dimension: " + actionSpaceDimension);
+    System.out.println("Sensor readings dimension: " + sensorReadingsDimension);
 
     // Create Tabular Q-Learning agent
     TabularSARSALambda rlAgentDiscrete = new TabularSARSALambda(0.95,
@@ -483,21 +485,6 @@ public class StarterRL {
         .stream()
         .map(RLEnsembleOutcome.RLOutcome::validationVelocity)
         .collect(Collectors.toList()));
-
-    // Create the environment
-    //Locomotion locomotion = new Locomotion(50, getTerrain(), 10000, new Settings());
-    //Grid
-
-    //File file = new File("results.csv");
-    //listener.toFile(file);
-    //System.out.println("Results saved to " + file.getAbsolutePath());
-    //Locomotion locomotionTest = new Locomotion(45, getTerrain(), 10000, new Settings());
-    //GridOnlineViewer.run(locomotionTest, Grid.create(1, 1, new NamedValue<>("SARSA", robot)));
-
-    //RLLocomotion rlLocomotion = new RLLocomotion(1500d, 50d, 1, robot);
-    //RLEnsembleOutcome outcome = rlLocomotion.apply(rewardFunction);
-    //System.out.println(Arrays.toString(outcome.results().stream().map(RLEnsembleOutcome.RLOutcome::validationVelocity).toArray()));
   }
-
 
 }
