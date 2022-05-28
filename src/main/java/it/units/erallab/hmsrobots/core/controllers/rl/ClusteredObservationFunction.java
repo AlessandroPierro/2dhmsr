@@ -8,10 +8,7 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.SerializableBiFunction;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.ToDoubleFunction;
 
 public class ClusteredObservationFunction implements SerializableBiFunction<Double, Grid<Voxel>, double[]> {
@@ -30,6 +27,10 @@ public class ClusteredObservationFunction implements SerializableBiFunction<Doub
     private final List<List<Grid.Key>> clusters;
     @JsonProperty
     private final Config config;
+    @JsonProperty
+    private final int nSteps;
+
+    private transient List<double[]> history;
 
     private transient LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> map;
 
@@ -38,12 +39,23 @@ public class ClusteredObservationFunction implements SerializableBiFunction<Doub
     @JsonCreator
     public ClusteredObservationFunction(
             @JsonProperty("clusters") List<List<Grid.Key>> clusters,
-            @JsonProperty("config") Config config
+            @JsonProperty("config") Config config,
+            @JsonProperty("nSteps") int nSteps
     ) {
         this.clusters = clusters;
         this.config = config;
         this.map = makeMap();
-        this.nSensorReadings = map.values().stream().mapToInt(Map::size).sum();
+        this.nSteps = nSteps;
+        this.nSensorReadings = nSteps * map.values().stream().mapToInt(Map::size).sum();
+        this.history = new ArrayList<>();
+    }
+
+    @JsonCreator
+    public ClusteredObservationFunction(
+            @JsonProperty("clusters") List<List<Grid.Key>> clusters,
+            @JsonProperty("config") Config config
+    ) {
+        this(clusters, config, 1);
     }
 
     @Override
@@ -54,6 +66,10 @@ public class ClusteredObservationFunction implements SerializableBiFunction<Doub
         if (map == null) {
             this.map = makeMap();
             this.nSensorReadings = map.values().stream().mapToInt(Map::size).sum();
+        }
+
+        if (history == null) {
+            this.history = new ArrayList<>();
         }
 
         double[] observations = new double[nSensorReadings];
@@ -89,7 +105,17 @@ public class ClusteredObservationFunction implements SerializableBiFunction<Doub
             }
 
         }
-        return observations;
+
+        history.add(observations.clone());
+        if (history.size() > nSteps) {
+            history.remove(0);
+        }
+
+        // convert List<double[]> to double[]
+        if (nSteps == 1) {
+            return observations;
+        }
+        return history.stream().flatMapToDouble(Arrays::stream).toArray();
     }
 
     private LinkedHashMap<List<Grid.Key>, LinkedHashMap<Class<? extends Sensor>, ToDoubleFunction<double[]>>> makeMap() {

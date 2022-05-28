@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 public class AccelerationY extends AbstractSensor {
 
-    private static final AbstractSensor sensor = new SoftNormalization(new Trend(new VelocityY(4d), 0.5));
+    private static final AbstractSensor sensor = new VelocityY(4d);
 
     @JsonCreator
     public AccelerationY(
@@ -33,6 +33,7 @@ public class AccelerationY extends AbstractSensor {
 
     @Override
     public double[] sense(double t) {
+        sensor.setVoxel(voxel);
         return sensor.sense(t);
     }
 

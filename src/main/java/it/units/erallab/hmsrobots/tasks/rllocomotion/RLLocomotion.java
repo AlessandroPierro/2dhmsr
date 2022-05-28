@@ -28,6 +28,10 @@ import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.tasks.locomotion.Outcome;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
+import it.units.erallab.hmsrobots.viewers.GridFileWriter;
+import it.units.erallab.hmsrobots.viewers.NamedValue;
+import it.units.erallab.hmsrobots.viewers.VideoUtils;
+import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
 import org.dyn4j.dynamics.Settings;
 
 import java.io.File;
@@ -86,6 +90,22 @@ public class RLLocomotion extends AbstractTask<RewardFunction, RLEnsembleOutcome
                     }
                     Locomotion locomotion = new Locomotion(VALIDATION_TIME, StarterRL.getTerrain(), 50000, new Settings());
                     Outcome outcome = locomotion.apply(robot);
+
+
+
+                    Locomotion locomotionTest = new Locomotion(60, StarterRL.getTerrain(), 10000, new Settings());
+
+                    GridFileWriter.save(
+                            locomotionTest,
+                            Grid.create(1, 1, new NamedValue<>("robot", robot)),
+                            600, 600, 1, 24,
+                            VideoUtils.EncoderFacility.JCODEC,
+                            new File("biped-sarsa-axyr.mp4"),
+                            Drawers::basicWithMiniWorld
+                    );
+
+
+
                     //locomotion = new Locomotion(70, StarterRL.getTerrain(), 50000, new Settings());
                     //RLListener ll = new RLListener();
                     //locomotion.apply(robot, ll);

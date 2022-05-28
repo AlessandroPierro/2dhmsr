@@ -58,7 +58,10 @@ public class RobotUtils {
             Map.entry("l5", (x, y) -> new Normalization(new Lidar(10d, Map.of(lidarSide(x, y), 5)))),
             Map.entry("l1", (x, y) -> new Normalization(new Lidar(10d, Map.of(lidarSide(x, y), 1)))),
             Map.entry("Vx", (x, y) -> new SoftNormalization(new Average(new VelocityX(8d), 0.5))),
-            Map.entry("Vy", (x, y) -> new SoftNormalization(new Average(new VelocityY(8d), 0.5)))
+            Map.entry("Vy", (x, y) -> new SoftNormalization(new Average(new VelocityY(8d), 0.5))),
+            Map.entry("Ax", (x, y) -> new SoftNormalization(new Trend(new AccelerationX(), 0.5))),
+            Map.entry("Ay", (x, y) -> new SoftNormalization(new Trend(new AccelerationY(), 0.5)))
+
     ));
 
     private RobotUtils() {

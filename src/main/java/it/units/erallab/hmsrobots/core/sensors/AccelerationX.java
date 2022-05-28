@@ -21,7 +21,7 @@ import it.units.erallab.hmsrobots.util.DoubleRange;
 
 public class AccelerationX extends AbstractSensor {
 
-    private static final AbstractSensor sensor = new SoftNormalization(new Trend(new VelocityX(4d), 0.5));
+    private static final AbstractSensor sensor = new VelocityX(4d);
 
     @JsonCreator
     public AccelerationX(
@@ -31,6 +31,7 @@ public class AccelerationX extends AbstractSensor {
 
     @Override
     public double[] sense(double t) {
+        sensor.setVoxel(voxel);
         return sensor.sense(t);
     }
 

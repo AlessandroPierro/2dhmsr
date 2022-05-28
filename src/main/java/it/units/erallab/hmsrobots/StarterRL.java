@@ -186,17 +186,17 @@ public class StarterRL {
 
     private static void distributedRL(
             int seed, String shape, boolean touch, boolean area, double controllerStep
-    ) throws IOException {
+    ) {
 
         // Configs
-        String sensorConfig = "uniform-a+t+r+vxy-0";
+        String sensorConfig = "uniform-a+Ax+Ay+Vx+Vy+t+r+vxy-0";
         int nClusters = 4;
 
         // Create the body and the clusters
         //Grid<Voxel> body = RobotUtils.buildSensorizingFunction(sensorConfig).apply(Grid.create(5, 4,
         //        (x, y) -> (y == 0 && (x == 0 || x == 3)) || ((y == 1 || y == 2) && x < 4 ) || (y == 3 && (x == 3 || x == 4))));
-        Grid<Voxel> body = RobotUtils.buildSensorizingFunction(sensorConfig).apply(RobotUtils.buildShape("biped-8x5"));
-        Set<Set<Grid.Key>> clustersSet = computeClusteredByPositionPoses(Grid.create(body, Objects::nonNull), 15, 99);
+        Grid<Voxel> body = RobotUtils.buildSensorizingFunction(sensorConfig).apply(RobotUtils.buildShape("biped-4x3"));
+        Set<Set<Grid.Key>> clustersSet = computeClusteredByPositionPoses(Grid.create(body, Objects::nonNull), 10, 99);
         List<List<Grid.Key>> clusters = clustersSet.stream().map(s -> s.stream().toList()).toList();
 
         System.out.println(clusters);
@@ -244,13 +244,34 @@ public class StarterRL {
 
             List<List<Grid.Key>> subClusters = new ArrayList<>();
             subClusters.add(clusters.get(i));
-            subClusters.add(clusters.get(random.nextInt(0, clusters.size())));
-            subClusters.add(clusters.get(random.nextInt(0, clusters.size())));
+            Grid.Key key = clusters.get(i).get(0);
+            if (body.get(key.x()+1, key.y()) != null) {
+                List<Grid.Key> tmp = new ArrayList<>();
+                tmp.add(new Grid.Key(key.x()+1, key.y()));
+                subClusters.add(tmp);
+            }
+            if (body.get(key.x()-1, key.y()) != null) {
+                List<Grid.Key> tmp = new ArrayList<>();
+                tmp.add(new Grid.Key(key.x()-1, key.y()));
+                subClusters.add(tmp);
+            }
+            if (body.get(key.x(), key.y()+1) != null) {
+                List<Grid.Key> tmp = new ArrayList<>();
+                tmp.add(new Grid.Key(key.x(), key.y()+1));
+                subClusters.add(tmp);
+            }
+            if (body.get(key.x(), key.y()-1) != null) {
+                List<Grid.Key> tmp = new ArrayList<>();
+                tmp.add(new Grid.Key(key.x(), key.y()-1));
+                subClusters.add(tmp);
+            }
 
             // Create observation function
-            ClusteredObservationFunction.Config cfg = new ClusteredObservationFunction.Config(true, false, true, true, false, false, false);
+            ClusteredObservationFunction.Config cfg = new ClusteredObservationFunction.Config(false, false, false, false, false, true, true);
             ClusteredObservationFunction observationFunction = new ClusteredObservationFunction(subClusters, cfg);
             obs.add(observationFunction);
+
+            System.out.println("output dim:" + observationFunction.getOutputDimension());
 
             // Compute dimensions
             int sensorReadingsDimension = observationFunction.getOutputDimension();
@@ -261,7 +282,7 @@ public class StarterRL {
             DiscreteRL.InputConverter binaryInputConverter = new BinaryInputConverter(sensorReadingsDimension);
 
             // Create binary output converter
-            DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(1, 0.8);
+            DiscreteRL.OutputConverter binaryOutputConverter = new BinaryOutputConverter(1, 0.5);
 
             // Create Tabular Q-Learning agent
             TabularQLearning rlAgentDiscrete = new TabularQLearning(
@@ -284,8 +305,8 @@ public class StarterRL {
         // Create the RL controller and apply it to the body
         DistributedRLController rlController = new DistributedRLController(obs, rewardFunction, rls, controlFunction);
         StepController stepController = new StepController(rlController, 0.35);
-        SmoothedController smoothedController = new SmoothedController(stepController, 5d);
-        Robot robot = new Robot(smoothedController, SerializationUtils.clone(body));
+        //SmoothedController smoothedController = new SmoothedController(stepController, 5d);
+        Robot robot = new Robot(stepController, SerializationUtils.clone(body));
 
         //Locomotion locomotion2 = new Locomotion(60, getTerrain(), 10000, new Settings());
         //GridOnlineViewer.run(locomotion2, Grid.create(1, 1, new NamedValue<>("SARSA", robot)));
