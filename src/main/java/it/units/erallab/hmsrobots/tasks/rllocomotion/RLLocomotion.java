@@ -43,85 +43,103 @@ import java.util.stream.Collectors;
 
 public class RLLocomotion extends AbstractTask<RewardFunction, RLEnsembleOutcome> {
 
-    private final double maxTime;
-    private final double maxEpisodeTime;
-    private final int nAgents;
-    private final Robot robot;
+  private final double maxTime;
+  private final double maxEpisodeTime;
+  private final int nAgents;
+  private final Robot robot;
 
-    private static final double VALIDATION_TIME = 30d;
+  private static final double VALIDATION_TIME = 30d;
 
-    public RLLocomotion(double maxTime, double maxEpisodeTime, int nAgents, Robot robot) {
-        super(new Settings());
-        this.maxTime = maxTime;
-        this.maxEpisodeTime = maxEpisodeTime;
-        this.nAgents = nAgents;
-        this.robot = SerializationUtils.clone(robot);
-    }
+  public RLLocomotion(double maxTime, double maxEpisodeTime, int nAgents, Robot robot) {
+    super(new Settings());
+    this.maxTime = maxTime;
+    this.maxEpisodeTime = maxEpisodeTime;
+    this.nAgents = nAgents;
+    this.robot = robot;
+  }
 
-    Predicate<Map<Double, Outcome.Observation>> makeStoppingCriterion(double remainingTime) {
-        return map -> {
-            if (map.isEmpty()) {
-                return false;
-            }
-            double lastTime = map.keySet().stream().max(Double::compareTo).orElse(-1d);
-            if (lastTime > remainingTime) {
-                return true;
-            }
-            map = map.entrySet().stream().filter(e -> e.getKey() >= lastTime - 5).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            return map.values().stream().map(obs -> obs.voxelPolies().stream().filter(e -> e.key().y() == 0 && e.value() != null).map(Grid.Entry::value).findFirst().get().getAngle()).map(angle -> angle < -Math.PI / 2d || angle > Math.PI / 2d).reduce(true, (a, b) -> a && b);
-        };
-    }
+  Predicate<Map<Double, Outcome.Observation>> makeStoppingCriterion(double remainingTime) {
+    return map -> {
+      if (map.isEmpty()) {
+        return false;
+      }
+      double lastTime = map.keySet().stream().max(Double::compareTo).orElse(-1d);
+      if (lastTime > remainingTime) {
+        return true;
+      }
+      map = map.entrySet()
+          .stream()
+          .filter(e -> e.getKey() >= lastTime - 5)
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      return map.values()
+          .stream()
+          .map(obs -> obs.voxelPolies()
+              .stream()
+              .filter(e -> e.key().y() == 0 && e.value() != null)
+              .map(Grid.Entry::value)
+              .findFirst()
+              .get()
+              .getAngle())
+          .map(angle -> angle < -Math.PI / 2d || angle > Math.PI / 2d)
+          .reduce(true, (a, b) -> a && b);
+    };
+  }
 
-    @Override
-    public RLEnsembleOutcome apply(RewardFunction rewardFunction, SnapshotListener listener) {
-        Set<RLEnsembleOutcome.RLOutcome> outcomes = new HashSet<>();
-        if (robot.getController() instanceof CompositeController cc) {
-            if (cc.getInnermostController() instanceof RLController rlController) {
-                rlController.setRewardFunction(rewardFunction);
-                for (int i = 0; i < nAgents; i++) {
-                    double usedTime = 0;
-                    RLListener innerListener = new RLListener();
-                    rlController.getRL().reinitialize();
-                    while (usedTime < maxTime - 0.5) {
-                        Predicate<Map<Double, Outcome.Observation>> earlyStopping = makeStoppingCriterion(Math.min(maxEpisodeTime, maxTime - usedTime));
-                        Locomotion locomotion = new Locomotion(earlyStopping, StarterRL.getTerrain(), 50000, new Settings());
-                        Outcome outcome = locomotion.apply(robot, innerListener);
-                        usedTime += outcome.getTime();
-                    }
-                    Locomotion locomotion = new Locomotion(VALIDATION_TIME, StarterRL.getTerrain(), 50000, new Settings());
-                    Outcome outcome = locomotion.apply(robot);
+  @Override
+  public RLEnsembleOutcome apply(RewardFunction rewardFunction, SnapshotListener listener) {
+    Set<RLEnsembleOutcome.RLOutcome> outcomes = new HashSet<>();
+    if (robot.getController() instanceof CompositeController cc) {
+      if (cc.getInnermostController() instanceof RLController rlController) {
+        rlController.setRewardFunction(rewardFunction);
+        for (int i = 0; i < nAgents; i++) {
+          double usedTime = 0;
+          RLListener innerListener = new RLListener();
+          rlController.getRL().reinitialize();
+          while (usedTime < maxTime - 0.5) {
+            Predicate<Map<Double, Outcome.Observation>> earlyStopping = makeStoppingCriterion(Math.min(
+                maxEpisodeTime,
+                maxTime - usedTime
+            ));
+            Locomotion locomotion = new Locomotion(earlyStopping, StarterRL.getTerrain(), 50000, new Settings());
+            Outcome outcome = locomotion.apply(robot, innerListener);
+            usedTime += outcome.getTime();
+          }
+          Locomotion locomotion = new Locomotion(VALIDATION_TIME, StarterRL.getTerrain(), 50000, new Settings());
+          Outcome outcome = locomotion.apply(robot);
 
 
+          Locomotion locomotionTest = new Locomotion(60, StarterRL.getTerrain(), 10000, new Settings());
 
-                    Locomotion locomotionTest = new Locomotion(60, StarterRL.getTerrain(), 10000, new Settings());
-
-                    GridFileWriter.save(
-                            locomotionTest,
-                            Grid.create(1, 1, new NamedValue<>("robot", robot)),
-                            600, 600, 1, 24,
-                            VideoUtils.EncoderFacility.JCODEC,
-                            new File("biped-sarsa-axyr.mp4"),
-                            Drawers::basicWithMiniWorld
-                    );
-
+          GridFileWriter.save(
+              locomotionTest,
+              Grid.create(1, 1, new NamedValue<>("robot", robot)),
+              600, 600, 1, 24,
+              VideoUtils.EncoderFacility.JCODEC,
+              new File("ciaociao.mp4"),
+              Drawers::basicWithMiniWorld
+          );
 
 
-                    //locomotion = new Locomotion(70, StarterRL.getTerrain(), 50000, new Settings());
-                    //RLListener ll = new RLListener();
-                    //locomotion.apply(robot, ll);
-                    //File file = new File("validation_data.csv");
-                    //ll.toFile(file);
-                    double avgVelocity = outcome.getDistance() / outcome.getTime();
-                    outcomes.add(new RLEnsembleOutcome.RLOutcome(innerListener.extractVelocities().stream().toList(), innerListener.extractRewards().stream().toList(), avgVelocity));
-                }
-            }
+          //locomotion = new Locomotion(70, StarterRL.getTerrain(), 50000, new Settings());
+          //RLListener ll = new RLListener();
+          //locomotion.apply(robot, ll);
+          //File file = new File("validation_data.csv");
+          //ll.toFile(file);
+          double avgVelocity = outcome.getDistance() / outcome.getTime();
+          outcomes.add(new RLEnsembleOutcome.RLOutcome(
+              innerListener.extractVelocities().stream().toList(),
+              innerListener.extractRewards().stream().toList(),
+              avgVelocity
+          ));
         }
-        return new RLEnsembleOutcome(outcomes);
+      }
     }
+    return new RLEnsembleOutcome(outcomes);
+  }
 
-    @Override
-    public RLEnsembleOutcome apply(RewardFunction solution) {
-        return apply(solution, null);
-    }
+  @Override
+  public RLEnsembleOutcome apply(RewardFunction solution) {
+    return apply(solution, null);
+  }
 
 }

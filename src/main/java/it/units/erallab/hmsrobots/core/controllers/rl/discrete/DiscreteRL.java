@@ -10,49 +10,49 @@ import java.io.Serializable;
 import java.util.function.Function;
 
 public interface DiscreteRL extends IOSized, Snapshottable, Resettable, Serializable {
-    interface InputConverter extends Function<double[], Integer>, IOSized {
-    }
+  interface InputConverter extends Function<double[], Integer>, IOSized {
+  }
 
-    interface OutputConverter extends Function<Integer, double[]>, IOSized {
-    }
+  interface OutputConverter extends Function<Integer, double[]>, IOSized {
+  }
 
-    int apply(double t, int input, double r);
+  int apply(double t, int input, double r);
 
-    void reinitialize();
+  void reinitialize();
 
-    default ContinuousRL with(InputConverter inputConverter, OutputConverter outputConverter) {
-        DiscreteRL inner = this;
-        return new ContinuousRL() {
-            @Override
-            public double[] apply(double t, double[] state, double reward) {
-                return outputConverter.apply(inner.apply(t, inputConverter.apply(state), reward));
-            }
+  default ContinuousRL with(InputConverter inputConverter, OutputConverter outputConverter) {
+    DiscreteRL inner = this;
+    return new ContinuousRL() {
+      @Override
+      public double[] apply(double t, double[] state, double reward) {
+        return outputConverter.apply(inner.apply(t, inputConverter.apply(state), reward));
+      }
 
-            @Override
-            public int getInputDimension() {
-                return inputConverter.getInputDimension();
-            }
+      @Override
+      public int getInputDimension() {
+        return inputConverter.getInputDimension();
+      }
 
-            @Override
-            public int getOutputDimension() {
-                return outputConverter.getOutputDimension();
-            }
+      @Override
+      public int getOutputDimension() {
+        return outputConverter.getOutputDimension();
+      }
 
-            @Override
-            public Snapshot getSnapshot() {
-                return inner.getSnapshot();
-            }
+      @Override
+      public Snapshot getSnapshot() {
+        return inner.getSnapshot();
+      }
 
-            @Override
-            public void reset() {
-                inner.reset();
-            }
+      @Override
+      public void reset() {
+        inner.reset();
+      }
 
-            @Override
-            public void reinitialize() {
-                inner.reinitialize();
-            }
-        };
-    }
+      @Override
+      public void reinitialize() {
+        inner.reinitialize();
+      }
+    };
+  }
 
 }

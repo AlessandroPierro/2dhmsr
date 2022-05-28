@@ -22,6 +22,6 @@ import java.util.Set;
 
 public record RLEnsembleOutcome(Set<RLOutcome> results) {
 
-    public record RLOutcome(List<Double> velocities, List<Double> rewards, double validationVelocity) {}
+  public record RLOutcome(List<Double> velocities, List<Double> rewards, double validationVelocity) {}
 
 }

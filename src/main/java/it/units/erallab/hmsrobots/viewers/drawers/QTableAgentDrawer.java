@@ -7,7 +7,6 @@ import it.units.erallab.hmsrobots.viewers.DrawingUtils;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
-import java.util.Arrays;
 import java.util.SortedMap;
 
 public class QTableAgentDrawer extends MemoryDrawer<QTableAgentState> {

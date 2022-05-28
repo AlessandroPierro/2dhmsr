@@ -19,26 +19,24 @@ package it.units.erallab.hmsrobots.core.sensors;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import it.units.erallab.hmsrobots.util.DoubleRange;
 
-import java.util.Arrays;
-
 public class AccelerationY extends AbstractSensor {
 
-    private static final AbstractSensor sensor = new VelocityY(4d);
+  private static final AbstractSensor sensor = new VelocityY(4d);
 
-    @JsonCreator
-    public AccelerationY(
-    ) {
-        super(new DoubleRange[]{new DoubleRange(0, 1)});
-    }
+  @JsonCreator
+  public AccelerationY(
+  ) {
+    super(new DoubleRange[]{new DoubleRange(0, 1)});
+  }
 
-    @Override
-    public double[] sense(double t) {
-        sensor.setVoxel(voxel);
-        return sensor.sense(t);
-    }
+  @Override
+  public double[] sense(double t) {
+    sensor.setVoxel(voxel);
+    return sensor.sense(t);
+  }
 
-    @Override
-    public String toString() {
-        return "AccelerationY{}";
-    }
+  @Override
+  public String toString() {
+    return "AccelerationY{}";
+  }
 }

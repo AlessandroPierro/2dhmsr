@@ -21,22 +21,22 @@ import it.units.erallab.hmsrobots.util.DoubleRange;
 
 public class AccelerationX extends AbstractSensor {
 
-    private static final AbstractSensor sensor = new VelocityX(4d);
+  private static final AbstractSensor sensor = new VelocityX(4d);
 
-    @JsonCreator
-    public AccelerationX(
-    ) {
-        super(new DoubleRange[]{new DoubleRange(0, 1)});
-    }
+  @JsonCreator
+  public AccelerationX(
+  ) {
+    super(new DoubleRange[]{new DoubleRange(0, 1)});
+  }
 
-    @Override
-    public double[] sense(double t) {
-        sensor.setVoxel(voxel);
-        return sensor.sense(t);
-    }
+  @Override
+  public double[] sense(double t) {
+    sensor.setVoxel(voxel);
+    return sensor.sense(t);
+  }
 
-    @Override
-    public String toString() {
-        return "AccelerationX{}";
-    }
+  @Override
+  public String toString() {
+    return "AccelerationX{}";
+  }
 }

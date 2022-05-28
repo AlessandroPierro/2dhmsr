@@ -18,32 +18,30 @@ package it.units.erallab.hmsrobots.core.sensors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import it.units.erallab.hmsrobots.core.geometry.Point2;
 import it.units.erallab.hmsrobots.util.DoubleRange;
-import org.dyn4j.geometry.Vector2;
 
 public class VelocityY extends AbstractSensor {
 
-    @JsonProperty
-    private final double maxVelocityNorm;
+  @JsonProperty
+  private final double maxVelocityNorm;
 
-    @JsonCreator
-    public VelocityY(
-            @JsonProperty("maxVelocityNorm") double maxVelocityNorm
-    ) {
-        super(new DoubleRange[]{DoubleRange.of(-maxVelocityNorm, maxVelocityNorm)});
-        this.maxVelocityNorm = maxVelocityNorm;
-    }
+  @JsonCreator
+  public VelocityY(
+      @JsonProperty("maxVelocityNorm") double maxVelocityNorm
+  ) {
+    super(new DoubleRange[]{DoubleRange.of(-maxVelocityNorm, maxVelocityNorm)});
+    this.maxVelocityNorm = maxVelocityNorm;
+  }
 
-    @Override
-    public double[] sense(double t) {
-        return new double[]{voxel.getLinearVelocity().y()};
-    }
+  @Override
+  public double[] sense(double t) {
+    return new double[]{voxel.getLinearVelocity().y()};
+  }
 
-    @Override
-    public String toString() {
-        return "VelocityX{" +
-                ", maxVelocityNorm=" + maxVelocityNorm +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "VelocityX{" +
+        ", maxVelocityNorm=" + maxVelocityNorm +
+        '}';
+  }
 }
