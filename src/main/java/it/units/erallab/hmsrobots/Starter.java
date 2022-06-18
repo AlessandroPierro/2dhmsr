@@ -358,7 +358,7 @@ public class Starter {
   public static void main(String[] args) {
     //distBiped();
     //bipedWithBrain();
-    //bipeds();
+    bipeds();
     //rollingOne();
     //rollingBall();
     //breakingWorm();
@@ -369,7 +369,7 @@ public class Starter {
     //bipedCentralized();
     //devoComb();
     //bipedPoses();
-    critical();
+    //critical();
   }
 
   private static void multiped() {
