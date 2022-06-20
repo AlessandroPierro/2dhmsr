@@ -7,8 +7,6 @@ import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 import it.units.erallab.hmsrobots.core.snapshots.Snapshottable;
 import it.units.erallab.hmsrobots.util.Grid;
 
-import java.util.Arrays;
-
 public class RLController extends AbstractController implements Snapshottable {
 
   @JsonProperty

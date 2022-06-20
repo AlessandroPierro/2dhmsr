@@ -7,9 +7,6 @@ import it.units.erallab.hmsrobots.util.Grid;
 
 import java.io.Serializable;
 import java.util.function.BiFunction;
-import java.util.function.Function;
-
-import static java.lang.Math.PI;
 
 public class RewardFunction implements Resettable, Serializable, BiFunction<Double, Grid<Voxel>, Double> {
 
@@ -18,6 +15,8 @@ public class RewardFunction implements Resettable, Serializable, BiFunction<Doub
   @JsonProperty
   private final int y;
 
+  private transient double previousX = Double.MAX_VALUE;
+
   public RewardFunction(@JsonProperty("x") int x, @JsonProperty("y") int y) {
     this.x = x;
     this.y = y;
@@ -25,9 +24,13 @@ public class RewardFunction implements Resettable, Serializable, BiFunction<Doub
 
   @Override
   public Double apply(Double aDouble, Grid<Voxel> voxels) {
-    final double velocity = voxels.get(x, y).getLinearVelocity().x();
-    final double rotation = voxels.get(x, y).getAngle();
-    return - 0.75 * PI < rotation && rotation < 0.75 * PI ? 10d * velocity : - 100d;
+    //final double velocity = voxels.get(x, y).getLinearVelocity().x();
+    //final double rotation = voxels.get(x, y).getAngle();
+    //return -0.5 * PI < rotation && rotation < 0.5 * PI ? (velocity < 0 ? -50d : velocity * 10d) : -100d;
+    final double currentX = voxels.get(x, y).center().x();
+    final double reward = previousX == Double.MAX_VALUE ? 0d : Math.exp(currentX - previousX);
+    previousX = currentX;
+    return reward;
   }
 
   @Override

@@ -1,5 +1,6 @@
 package it.units.erallab.hmsrobots;
 
+import it.units.erallab.hmsrobots.behavior.PoseUtils;
 import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.dqn.*;
 import it.units.erallab.hmsrobots.core.objects.Robot;
@@ -8,7 +9,6 @@ import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.viewers.GridFileWriter;
-import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
 import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import org.dyn4j.dynamics.Settings;
 
@@ -16,10 +16,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static java.lang.System.exit;
+import java.util.Set;
 
 public class StarterRL {
+
+  static final String RESULTS_PATH = "/home/alessandropierro/experiments/";
 
   public static double[][] createTerrain() {
     return new double[][]{new double[]{0, 10d, 10000d - 10d, 10000d}, new double[]{100d, 5, 5, 100d}};
@@ -30,12 +31,11 @@ public class StarterRL {
 
     // Create a biped
     Grid<Boolean> morphology = RobotUtils.buildShape("biped-4x3");
-    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniformAll-0").apply(morphology);
+    Grid<Voxel> body = RobotUtils.buildSensorizingFunction("uniform-ax+t+r+vxy-0").apply(morphology);
 
     // Configure observation function
     List<String> sensors = new ArrayList<>();
     sensors.add("y");
-    sensors.add("vx");
     sensors.add("vy");
     sensors.add("a");
     sensors.add("r");
@@ -62,31 +62,37 @@ public class StarterRL {
 
     // Configure DQN agent
     final int inputDimension = observationFunction.getOutputDimension();
-    final int outputDimension = 10;
+    final int outputDimension = 32;
     ContinuousRL agent = new DQNAgent(inputDimension, outputDimension);
 
     // Configure the control function
-    ControlFunction controlFunction = new ControlFunction(keys, 4, 3);
+    Set<Set<Grid.Key>> clusteredKeys = PoseUtils.computeClusteredByPositionPoses(morphology, 5, 42);
+    List<List<Grid.Key>> keysList = new ArrayList<>();
+    for (Set<Grid.Key> clusteredKey : clusteredKeys) {
+      keysList.add(new ArrayList<>(clusteredKey.stream().toList()));
+    }
+    ControlFunction controlFunction = new ControlFunction(keysList, 4, 3);
 
     // Configure robot
-    final double controllerFreq = 0.2;
+    final double controllerFreq = 0.25;
     final RLController controller = new RLController(observationFunction, rewardFunction, agent, controlFunction);
     final StepController stepController = new StepController(controller, controllerFreq);
     final Robot robot = new Robot(stepController, body);
 
     System.out.println("Robot initialized");
 
-    // Run the simulation
-    final int episodes = 10;
+    // Launch learning
+    final int episodes = 200;
     final double episodeLength = 100d;
 
     for (int i = 0; i < episodes; i++) {
-      // TODO : implement listener
       System.out.println("Episode " + i + " of " + episodes + " started");
+      // TODO : Introduce early stopping based on rotation
       Locomotion locomotion = new Locomotion(episodeLength, createTerrain(), 5000d, new Settings());
-      locomotion.apply(robot, null);
-      File file = new File("biped-dqn-episode-" + i + ".csv");
-
+      RLControllerListener listener = new RLControllerListener();
+      locomotion.apply(robot, listener);
+      File file = new File(RESULTS_PATH + "biped-dqn-episode-" + i + ".csv");
+      listener.toFile(file);
     }
 
     // Test the agent
@@ -101,7 +107,7 @@ public class StarterRL {
         0,
         30,
         VideoUtils.EncoderFacility.JCODEC,
-        new File("/home/alessandro/experiments/biped-dqn-test.mp4")
+        new File(RESULTS_PATH + "biped-dqn-test.mp4")
     );
 
     System.out.println("Test finished");

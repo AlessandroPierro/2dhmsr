@@ -1,13 +1,13 @@
 package it.units.erallab.hmsrobots.core.controllers.dqn;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import it.units.erallab.hmsrobots.core.snapshots.Snapshot;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class DQNAgent extends ContinuousRL {
@@ -15,7 +15,7 @@ public class DQNAgent extends ContinuousRL {
   public DQNAgent(int stateDimension, int actionDimension) {
     this.stateDimension = stateDimension;
     this.actionDimension = actionDimension;
-    this.network = new DQN(stateDimension, (int) (0.7 * stateDimension), (int) (0.7 * stateDimension), actionDimension);
+    this.network = new DQN(stateDimension, (int) (1.2 * stateDimension), (int) (1.2 * stateDimension), actionDimension);
     this.targetNetwork = network.copy();
     this.replayMemory = new ReplayMemory(REPLAY_MEMORY_SIZE);
     this.random = new Random(RANDOM_SEED);
@@ -56,6 +56,7 @@ public class DQNAgent extends ContinuousRL {
     }
 
     public List<RLTransition> sampleBatch(int batchSize) {
+      // TODO : implement weighted sampling based on error
       if (batchSize > memory.size()) {
         throw new IllegalArgumentException("ReplayMemory - Batch size cannot be greater than the memory size");
       }
@@ -98,6 +99,7 @@ public class DQNAgent extends ContinuousRL {
     private final double[] b3;
 
     private static final double LEARNING_RATE = 0.001;
+    private static final double DISCOUNT_FACTOR = 0.95;
     private static final int RANDOM_SEED = 42;
 
     private transient double[] inputState;
@@ -210,6 +212,8 @@ public class DQNAgent extends ContinuousRL {
     }
 
     public void updateWeights(List<RLTransition> batch, DQN targetDQN) {
+      // TODO : update to RMSProp and Huber loss
+      double loss = 0;
       double[][] dW1 = new double[layer1Dimension][inputDimension];
       double[][] dW2 = new double[layer2Dimension][layer1Dimension];
       double[][] dW3 = new double[outputDimension][layer2Dimension];
@@ -218,10 +222,17 @@ public class DQNAgent extends ContinuousRL {
       double[] db3 = new double[outputDimension];
       for (RLTransition transition : batch) {
         double[] target = targetDQN.apply(transition.state());
-        double targetValue = target[transition.action()];
+        int maxAction = 0;
+        for (int i = 0; i < outputDimension; ++i) {
+          if (target[i] > target[maxAction]) {
+            maxAction = i;
+          }
+        }
+        double targetValue = 0.95 * target[maxAction] + transition.reward();
         double[] output = apply(transition.state());
         double value = output[transition.action()];
         double error = targetValue - value;
+        loss += error * error;
         db3[transition.action()] += Math.max(0d, 2d * error);
         for (int i = 0; i < layer2Dimension; ++i) {
           dW3[transition.action()][i] += Math.max(0d, 2d * error) * layer2Output[i];
@@ -242,21 +253,21 @@ public class DQNAgent extends ContinuousRL {
 
       for (int i = 0; i < layer1Dimension; ++i) {
         for (int j = 0; j < inputDimension; ++j) {
-          W1[i][j] += LEARNING_RATE * dW1[i][j];
+          W1[i][j] -= LEARNING_RATE * dW1[i][j] / batch.size();
         }
-        b1[i] += LEARNING_RATE * db1[i];
+        b1[i] -= LEARNING_RATE * db1[i] / batch.size();
       }
       for (int i = 0; i < layer2Dimension; ++i) {
         for (int j = 0; j < layer1Dimension; ++j) {
-          W2[i][j] += LEARNING_RATE * dW2[i][j];
+          W2[i][j] -= LEARNING_RATE * dW2[i][j] / batch.size();
         }
-        b2[i] += LEARNING_RATE * db2[i];
+        b2[i] -= LEARNING_RATE * db2[i] / batch.size();
       }
       for (int i = 0; i < outputDimension; ++i) {
         for (int j = 0; j < layer2Dimension; ++j) {
-          W3[i][j] += LEARNING_RATE * dW3[i][j];
+          W3[i][j] -= LEARNING_RATE * dW3[i][j] / batch.size();
         }
-        b3[i] += LEARNING_RATE * db3[i];
+        b3[i] -= LEARNING_RATE * db3[i] / batch.size();
       }
     }
 
@@ -276,35 +287,37 @@ public class DQNAgent extends ContinuousRL {
     }
 
     private static double[][] copy(double[][] array) {
-      double[][] copy = new double[array.length][];
+      double[][] copy = new double[array.length][array[0].length];
       for (int i = 0; i < array.length; ++i) {
-        copy[i] = array[i].clone();
+        System.arraycopy(array[i], 0, copy[i], 0, array[i].length);
       }
       return copy;
     }
   }
 
   private static class OutputConverter implements Function<Integer, double[]>, Serializable {
+
     @JsonProperty
     private final int outputDimension;
 
     public OutputConverter(@JsonProperty("ouputDimension") int outputDimension) {
-      this.outputDimension = outputDimension;
+      this.outputDimension = (int) Math.ceil(Math.log(outputDimension) / Math.log(2));
     }
 
     @Override
     public double[] apply(Integer action) {
       double[] output = new double[outputDimension];
-      for (int i = 0; i < outputDimension; i++) {
-        output[i] = action % (int) Math.pow(3, i + 1) == 0 ? -0.75 : action % (int) Math.pow(3, i + 1) == 1 ? 0.75 : 0.0;
+      for (int i = outputDimension - 1; i >= 0; --i) {
+        output[i] = action % 2 == 0 ? -0.5 : 0.5;
+        action /= 2;
       }
       return output;
     }
   }
 
-  static final int REPLAY_MEMORY_SIZE = 50000;
+  static final int REPLAY_MEMORY_SIZE = 10000;
   static final int BATCH_SIZE = 32;
-  static final int POLICY_UPDATE_FREQUENCY = 4;
+  static final int POLICY_UPDATE_FREQUENCY = 500;
   static final int RANDOM_SEED = 42;
 
   @JsonProperty
@@ -329,6 +342,7 @@ public class DQNAgent extends ContinuousRL {
   @Override
   public double[] apply(double[] state, Double reward) {
     if (targetNetwork == null) {
+      System.out.println("Initializing target network");
       random = new Random(RANDOM_SEED);
       targetNetwork = network.copy();
       replayMemory = new ReplayMemory(REPLAY_MEMORY_SIZE);
@@ -352,7 +366,13 @@ public class DQNAgent extends ContinuousRL {
     previousState = state.clone();
     previousAction = selectAction(state);
     stepAction++;
-    return outputConverter.apply(previousAction);
+    return outputConverter.apply(previousAction).clone();
+  }
+
+  @Override
+  public Snapshot getSnapshot() {
+    DQNAgentState state = new DQNAgentState();
+    return new Snapshot(state, this.getClass());
   }
 
   private int selectAction(double[] state) {
@@ -383,7 +403,7 @@ public class DQNAgent extends ContinuousRL {
   }
 
   private double getExplorationRate() {
-    return Math.max(0.1, 1d - 0.9 * 0.0000001 * stepAction);
+    return Math.max(0.1, 1d - 0.9 * 0.000001 * stepAction);
   }
 
   public void enableLearning() {

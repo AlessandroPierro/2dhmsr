@@ -8,7 +8,6 @@ import it.units.erallab.hmsrobots.util.Grid;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 
@@ -25,12 +24,18 @@ public class ObservationFunction implements BiFunction<Double, Grid<Voxel>, doub
 
   protected transient List<Double> observations;
 
-  public ObservationFunction(@JsonProperty("config") List<String> sensors, @JsonProperty("keys") List<Grid.Key> keys, @JsonProperty("steps") int steps) {
+  public ObservationFunction(
+      @JsonProperty("config") List<String> sensors,
+      @JsonProperty("keys") List<Grid.Key> keys,
+      @JsonProperty("steps") int steps
+  ) {
     this.sensors = sensors;
     this.keys = keys;
     this.steps = steps;
     this.outputDimension = sensors.size() * keys.size() * steps;
-    this.observations = IntStream.range(1, outputDimension + 1).mapToDouble(i -> 0).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    this.observations = IntStream.range(1, outputDimension + 1)
+        .mapToDouble(i -> 0)
+        .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
   }
 
   public ObservationFunction(@JsonProperty("config") List<String> sensors, @JsonProperty("keys") List<Grid.Key> keys) {
@@ -40,7 +45,9 @@ public class ObservationFunction implements BiFunction<Double, Grid<Voxel>, doub
   @Override
   public double[] apply(Double aDouble, Grid<Voxel> voxels) {
     if (observations == null) {
-      observations = IntStream.range(1, outputDimension + 1).mapToDouble(i -> 0).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+      observations = IntStream.range(1, outputDimension + 1)
+          .mapToDouble(i -> 0)
+          .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
     for (String sensor : sensors) {
       for (Grid.Key key : keys) {
