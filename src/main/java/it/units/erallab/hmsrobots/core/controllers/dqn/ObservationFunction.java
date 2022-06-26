@@ -59,6 +59,7 @@ public class ObservationFunction implements BiFunction<Double, Grid<Voxel>, doub
   }
 
   private double extractReading(String sensor, Voxel voxel) {
+    // TODO : Normalize the readings
     switch (sensor) {
       case "x":
         return voxel.center().x();
@@ -69,7 +70,7 @@ public class ObservationFunction implements BiFunction<Double, Grid<Voxel>, doub
       case "vy":
         return voxel.getLinearVelocity().y();
       case "a":
-        return voxel.getAreaRatio();
+        return voxel.getAreaRatio() - 0.5;
       case "r":
         return voxel.getAngle();
     }
