@@ -19,6 +19,8 @@ package it.units.erallab.hmsrobots.viewers.drawers;
 
 import it.units.erallab.hmsrobots.behavior.BehaviorUtils;
 import it.units.erallab.hmsrobots.core.controllers.DistributedSensing;
+import it.units.erallab.hmsrobots.core.controllers.rl.RLControllerListener;
+import it.units.erallab.hmsrobots.core.controllers.rl.RLControllerState;
 import it.units.erallab.hmsrobots.core.geometry.BoundingBox;
 import it.units.erallab.hmsrobots.core.objects.Ground;
 import it.units.erallab.hmsrobots.core.objects.Robot;
@@ -174,6 +176,57 @@ public class Drawers {
         Drawer.clip(
             BoundingBox.of(0d, 0.5d, 1d, 1d),
             spectra(0, 5, 0, 2, 8)
+        ),
+        new InfoDrawer(string)
+    );
+  }
+
+
+  public static Drawer basicWithMiniWorldAndRL(String string) {
+    return Drawer.of(
+        Drawer.clear(),
+        Drawer.clip(
+            BoundingBox.of(0d, 0.0d, 1d, 0.5d),
+            Drawer.of(
+                world(),
+                Drawer.clip(
+                    BoundingBox.of(0.5d, 0.01d, 0.95d, 0.2d),
+                    miniWorld()
+                )
+            )
+        ),
+        Drawer.clip(
+            BoundingBox.of(0d, 0.5d, 1d, 1d), Drawer.of(
+                Drawer.clip(
+                    BoundingBox.of(0d, 0d, .333d, 1d),
+                    signalAndSpectrum(
+                        0, 5, 0, 2, 8, "vx",
+                        () -> BehaviorUtils.voxelPolyGrid()
+                            .andThen(BehaviorUtils::getCentralElement)
+                            .andThen(p -> p.getLinearVelocity().x())
+                    )
+                ),
+                Drawer.clip(
+                    BoundingBox.of(0.333d, 0d, .666d, 1d),
+                    signalAndSpectrum(
+                        0, 5, 0, 2, 8, "reward",
+                        () -> ((Snapshot s) -> {
+                          RLControllerListener listener = new RLControllerListener();
+                          RLControllerState a = listener.extractControllerState(s);
+                          return a.reward();
+                        })
+                    )
+                ),
+                Drawer.clip(
+                    BoundingBox.of(0.666d, 0d, 1d, 1d),
+                    signalAndSpectrum(
+                        0, 5, 0, 2, 8, "angle",
+                        () -> BehaviorUtils.voxelPolyGrid()
+                            .andThen(BehaviorUtils::getCentralElement)
+                            .andThen(VoxelPoly::getAngle)
+                    )
+                )
+            )
         ),
         new InfoDrawer(string)
     );

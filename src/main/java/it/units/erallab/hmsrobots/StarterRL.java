@@ -11,7 +11,10 @@ import it.units.erallab.hmsrobots.tasks.locomotion.Outcome;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.viewers.GridFileWriter;
+import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
+import it.units.erallab.hmsrobots.viewers.NamedValue;
 import it.units.erallab.hmsrobots.viewers.VideoUtils;
+import it.units.erallab.hmsrobots.viewers.drawers.Drawers;
 import org.dyn4j.dynamics.Settings;
 
 import java.io.File;
@@ -139,7 +142,7 @@ public class StarterRL {
     System.out.println("Robot initialized");
 
     // Launch learning
-    final int episodes = 150;
+    final int episodes = 1;
     final double episodeLength = 75d;
     final double[] pos = new double[episodes];
 
@@ -147,12 +150,12 @@ public class StarterRL {
       //System.out.println("Episode " + i + " of " + episodes + " started");
       Predicate<Map<Double, Outcome.Observation>> earlyStopping = makeStoppingCriterion(episodeLength);
       Locomotion locomotion = new Locomotion(earlyStopping, createTerrain(), 2500d, new Settings());
-      //GridOnlineViewer.run(
-      //    locomotion,
-      //    Grid.create(1, 1, new NamedValue<>("RL Robot", robot)),
-      //    Drawers::basicWithMiniWorldAndSpectra
-      //);
-      //System.exit(0);
+      GridOnlineViewer.run(
+          locomotion,
+          Grid.create(1, 1, new NamedValue<>("RL Robot", robot)),
+          Drawers::basicWithMiniWorldAndRL
+      );
+      System.exit(0);
       //RLControllerListener listener = new RLControllerListener();
       Outcome outcome = locomotion.apply(robot);
       pos[i] = outcome.getDistance();

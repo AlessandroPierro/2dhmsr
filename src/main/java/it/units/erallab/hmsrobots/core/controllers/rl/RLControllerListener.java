@@ -48,7 +48,7 @@ public class RLControllerListener implements SnapshotListener {
     return file;
   }
 
-  RLControllerState extractControllerState(Snapshot snapshot) {
+  public RLControllerState extractControllerState(Snapshot snapshot) {
     if (snapshot.getContent() instanceof RLControllerState state) {
       return state;
     } else {
