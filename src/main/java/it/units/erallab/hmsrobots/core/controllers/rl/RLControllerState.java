@@ -1,4 +1,4 @@
-package it.units.erallab.hmsrobots.core.controllers.dqn;
+package it.units.erallab.hmsrobots.core.controllers.rl;
 
 import it.units.erallab.hmsrobots.util.Grid;
 

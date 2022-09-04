@@ -1,4 +1,4 @@
-package it.units.erallab.hmsrobots.core.controllers.dqn;
+package it.units.erallab.hmsrobots.core.controllers.rl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
@@ -72,7 +72,7 @@ public class ObservationFunction implements BiFunction<Double, Grid<Voxel>, doub
       case "a":
         return voxel.getAreaRatio() - 0.5;
       case "r":
-        return voxel.getAngle();
+        return (voxel.getAngle() + Math.PI) / (2 * Math.PI);
     }
     throw new IllegalArgumentException("Observation function - Unknown sensor: " + sensor);
   }

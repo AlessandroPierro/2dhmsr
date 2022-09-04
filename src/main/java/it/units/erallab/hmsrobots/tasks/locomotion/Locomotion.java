@@ -32,6 +32,7 @@ import org.dyn4j.world.World;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.random.RandomGenerator;
 import java.util.stream.IntStream;
 
@@ -43,9 +44,10 @@ public class Locomotion extends AbstractTask<Robot, Outcome> {
   public static final int TERRAIN_LENGTH = 2000;
   public static final double TERRAIN_BORDER_WIDTH = 10d;
 
-  private final double finalT;
   private final double[][] groundProfile;
   private final double initialPlacement;
+
+  private final Predicate<Map<Double, Outcome.Observation>> stoppingCriterion;
 
   public Locomotion(double finalT, double[][] groundProfile, Settings settings) {
     this(finalT, groundProfile, groundProfile[0][1] + INITIAL_PLACEMENT_X_GAP, settings);
@@ -53,7 +55,28 @@ public class Locomotion extends AbstractTask<Robot, Outcome> {
 
   public Locomotion(double finalT, double[][] groundProfile, double initialPlacement, Settings settings) {
     super(settings);
-    this.finalT = finalT;
+    this.groundProfile = groundProfile;
+    this.initialPlacement = initialPlacement;
+    stoppingCriterion = map -> (map.keySet().stream().max(Double::compareTo).orElse(-1d) > finalT);
+  }
+
+  public Locomotion(
+      Predicate<Map<Double, Outcome.Observation>> stoppingCriterion, double[][] groundProfile, Settings settings
+  ) {
+    super(settings);
+    this.stoppingCriterion = stoppingCriterion;
+    this.groundProfile = groundProfile;
+    initialPlacement = groundProfile[0][1] + INITIAL_PLACEMENT_X_GAP;
+  }
+
+  public Locomotion(
+      Predicate<Map<Double, Outcome.Observation>> stoppingCriterion,
+      double[][] groundProfile,
+      double initialPlacement,
+      Settings settings
+  ) {
+    super(settings);
+    this.stoppingCriterion = stoppingCriterion;
     this.groundProfile = groundProfile;
     this.initialPlacement = initialPlacement;
   }
@@ -68,10 +91,7 @@ public class Locomotion extends AbstractTask<Robot, Outcome> {
     Map<String, String> params;
     //noinspection UnusedAssignment
     if ((params = Utils.params(flat, name)) != null) {
-      return new double[][]{
-          new double[]{0, TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH},
-          new double[]{TERRAIN_BORDER_HEIGHT, 5, 5, TERRAIN_BORDER_HEIGHT}
-      };
+      return new double[][]{new double[]{0, TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH}, new double[]{TERRAIN_BORDER_HEIGHT, 5, 5, TERRAIN_BORDER_HEIGHT}};
     }
     if ((params = Utils.params(flatWithStart, name)) != null) {
       RandomGenerator random = new Random(Integer.parseInt(params.get("seed")));
@@ -79,16 +99,8 @@ public class Locomotion extends AbstractTask<Robot, Outcome> {
           .forEach(i -> random.nextDouble()); //it looks like that otherwise the 1st double of nextDouble() is always around 0.73...
       double angle = Math.PI / 18d * (random.nextDouble() * 2d - 1d);
       double startLength = it.units.erallab.hmsrobots.core.objects.Voxel.SIDE_LENGTH * 8d;
-      return new double[][]{
-          new double[]{
-              0, TERRAIN_BORDER_WIDTH,
-              TERRAIN_BORDER_WIDTH + startLength, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH
-          },
-          new double[]{
-              TERRAIN_BORDER_HEIGHT, 5 + startLength * Math.sin(angle),
-              5, 5, TERRAIN_BORDER_HEIGHT
-          }
-      };
+      return new double[][]{new double[]{0, TERRAIN_BORDER_WIDTH, TERRAIN_BORDER_WIDTH + startLength, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH}, new double[]{TERRAIN_BORDER_HEIGHT, 5 + startLength * Math.sin(
+          angle), 5, 5, TERRAIN_BORDER_HEIGHT}};
     }
     if ((params = Utils.params(hilly, name)) != null) {
       double h = Double.parseDouble(params.get("h"));
@@ -100,12 +112,9 @@ public class Locomotion extends AbstractTask<Robot, Outcome> {
         xs.add(xs.get(xs.size() - 1) + Math.max(1d, (random.nextGaussian() * 0.25 + 1) * w));
         ys.add(ys.get(ys.size() - 1) + random.nextGaussian() * h);
       }
-      xs.addAll(List.of(xs.get(xs.size() - 1) + TERRAIN_BORDER_WIDTH));
-      ys.addAll(List.of(TERRAIN_BORDER_HEIGHT));
-      return new double[][]{
-          xs.stream().mapToDouble(d -> d).toArray(),
-          ys.stream().mapToDouble(d -> d).toArray()
-      };
+      xs.add(xs.get(xs.size() - 1) + TERRAIN_BORDER_WIDTH);
+      ys.add(TERRAIN_BORDER_HEIGHT);
+      return new double[][]{xs.stream().mapToDouble(d -> d).toArray(), ys.stream().mapToDouble(d -> d).toArray()};
     }
     if ((params = Utils.params(steppy, name)) != null) {
       double h = Double.parseDouble(params.get("h"));
@@ -119,38 +128,25 @@ public class Locomotion extends AbstractTask<Robot, Outcome> {
         ys.add(ys.get(ys.size() - 1));
         ys.add(ys.get(ys.size() - 1) + random.nextGaussian() * h);
       }
-      xs.addAll(List.of(xs.get(xs.size() - 1) + TERRAIN_BORDER_WIDTH));
-      ys.addAll(List.of(TERRAIN_BORDER_HEIGHT));
-      return new double[][]{
-          xs.stream().mapToDouble(d -> d).toArray(),
-          ys.stream().mapToDouble(d -> d).toArray()
-      };
+      xs.add(xs.get(xs.size() - 1) + TERRAIN_BORDER_WIDTH);
+      ys.add(TERRAIN_BORDER_HEIGHT);
+      return new double[][]{xs.stream().mapToDouble(d -> d).toArray(), ys.stream().mapToDouble(d -> d).toArray()};
     }
     if ((params = Utils.params(downhill, name)) != null) {
       double angle = Double.parseDouble(params.get("angle"));
       double dY = (TERRAIN_LENGTH - 2 * TERRAIN_BORDER_WIDTH) * Math.sin(angle / 180 * Math.PI);
-      return new double[][]{
-          new double[]{0, TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH},
-          new double[]{TERRAIN_BORDER_HEIGHT + dY, 5 + dY, 5, TERRAIN_BORDER_HEIGHT}
-      };
+      return new double[][]{new double[]{0, TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH}, new double[]{TERRAIN_BORDER_HEIGHT + dY, 5 + dY, 5, TERRAIN_BORDER_HEIGHT}};
     }
     if ((params = Utils.params(uphill, name)) != null) {
       double angle = Double.parseDouble(params.get("angle"));
       double dY = (TERRAIN_LENGTH - 2 * TERRAIN_BORDER_WIDTH) * Math.sin(angle / 180 * Math.PI);
-      return new double[][]{
-          new double[]{0, TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH},
-          new double[]{TERRAIN_BORDER_HEIGHT, 5, 5 + dY, TERRAIN_BORDER_HEIGHT + dY}
-      };
+      return new double[][]{new double[]{0, TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH - TERRAIN_BORDER_WIDTH, TERRAIN_LENGTH}, new double[]{TERRAIN_BORDER_HEIGHT, 5, 5 + dY, TERRAIN_BORDER_HEIGHT + dY}};
     }
     throw new IllegalArgumentException(String.format("Unknown terrain name: %s", name));
   }
 
   private static double[][] randomTerrain(
-      int n,
-      double length,
-      double peak,
-      double borderHeight,
-      RandomGenerator random
+      int n, double length, double peak, double borderHeight, RandomGenerator random
   ) {
     double[] xs = new double[n + 2];
     double[] ys = new double[n + 2];
@@ -180,10 +176,13 @@ public class Locomotion extends AbstractTask<Robot, Outcome> {
     BoundingBox boundingBox = robot.boundingBox();
     robot.translate(new Vector2(initialPlacement - boundingBox.min().x(), 0));
     //translate on y
-    double minYGap = robot.getVoxels().values().stream()
+    double minYGap = robot.getVoxels()
+        .values()
+        .stream()
         .filter(Objects::nonNull)
         .mapToDouble(v -> v.boundingBox().min().y() - ground.yAt(v.center().x()))
-        .min().orElse(0d);
+        .min()
+        .orElse(0d);
     robot.translate(new Vector2(0, INITIAL_PLACEMENT_Y_GAP - minYGap));
     //get initial x
     double initCenterX = robot.center().x();
@@ -191,9 +190,9 @@ public class Locomotion extends AbstractTask<Robot, Outcome> {
     robot.addTo(world);
     worldObjects.add(robot);
     //run
-    Map<Double, Outcome.Observation> observations = new HashMap<>((int) Math.ceil(finalT / settings.getStepFrequency()));
+    Map<Double, Outcome.Observation> observations = new HashMap<>();
     double t = 0d;
-    while (t < finalT) {
+    while (!stoppingCriterion.test(observations)) {
       t = AbstractTask.updateWorld(t, settings.getStepFrequency(), world, worldObjects, listener);
       observations.put(t, new Outcome.Observation(
           Grid.create(robot.getVoxels(), v -> v == null ? null : v.getVoxelPoly()),

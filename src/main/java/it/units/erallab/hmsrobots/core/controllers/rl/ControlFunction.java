@@ -1,4 +1,4 @@
-package it.units.erallab.hmsrobots.core.controllers.dqn;
+package it.units.erallab.hmsrobots.core.controllers.rl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.controllers.Resettable;
@@ -29,6 +29,9 @@ public class ControlFunction implements BiFunction<Double, double[], Grid<Double
 
   @Override
   public Grid<Double> apply(Double aDouble, double[] doubles) {
+    if (doubles.length != keys.size()) {
+      throw new IllegalArgumentException("RL ControlFunction - Invalid vector dimension: " + doubles.length);
+    }
     Grid<Double> grid = Grid.create(w, h);
     int counter = 0;
     for (List<Grid.Key> key : keys) {

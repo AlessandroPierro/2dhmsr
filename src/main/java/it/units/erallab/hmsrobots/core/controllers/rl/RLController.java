@@ -1,4 +1,4 @@
-package it.units.erallab.hmsrobots.core.controllers.dqn;
+package it.units.erallab.hmsrobots.core.controllers.rl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.units.erallab.hmsrobots.core.controllers.AbstractController;
